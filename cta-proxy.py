@@ -500,7 +500,7 @@ def main():
 ╚══════════════════════════════════════════════╝
 ''')
 
-    server = HTTPServer(('127.0.0.1', PORT), ProxyHandler)
+    server = HTTPServer(('0.0.0.0', PORT), ProxyHandler)
     try:
         server.serve_forever()
     except KeyboardInterrupt:

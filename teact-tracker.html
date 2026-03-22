@@ -1004,7 +1004,7 @@ window.addEventListener('resize', () => {
 // ============ CTA FUND FLOW MONITOR ============
 // 数据源: 本地代理 → 新浪财经(行情) + Tradingster(COT)
 
-const PROXY_BASE = 'http://127.0.0.1:8433';
+const PROXY_BASE = 'http://' + window.location.hostname + ':8433';
 let proxyOnline = false;
 
 // Assets to track for cross-market CTA signal
