@@ -1,0 +1,2204 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TEACT 预测跟踪验证面板</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --card: #1a1d29;
+    --card2: #1f2335;
+    --border: #2a2e3e;
+    --text: #e4e6f0;
+    --dim: #6b7194;
+    --green: #22c55e;
+    --red: #ef4444;
+    --amber: #f59e0b;
+    --blue: #3b82f6;
+    --purple: #a855f7;
+    --cyan: #06b6d4;
+    --bullish: #ef4444;
+    --bearish: #22c55e;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+  }
+  .container { max-width: 1280px; margin: 0 auto; padding: 24px 20px; }
+
+  /* Header */
+  .header { text-align: center; padding: 28px 0 20px; margin-bottom: 24px; }
+  .header h1 {
+    font-size: 26px; font-weight: 700;
+    background: linear-gradient(135deg, var(--blue), var(--purple), var(--red));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .header .sub { color: var(--dim); font-size: 14px; margin-top: 6px; }
+
+  /* Stats row */
+  .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 24px; }
+  .stat-card {
+    background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+    padding: 16px; text-align: center;
+  }
+  .stat-card .label { font-size: 12px; color: var(--dim); margin-bottom: 4px; }
+  .stat-card .value { font-size: 24px; font-weight: 700; }
+  .stat-card .detail { font-size: 11px; color: var(--dim); margin-top: 2px; }
+
+  /* Timeline chart */
+  .chart-section {
+    background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+    padding: 20px; margin-bottom: 24px;
+  }
+  .chart-title { font-size: 16px; font-weight: 600; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+  .chart-title .tag {
+    font-size: 11px; padding: 2px 8px; border-radius: 4px;
+    background: rgba(59,130,246,0.15); color: var(--blue);
+  }
+
+  /* SVG chart */
+  .chart-wrapper { width: 100%; overflow-x: auto; }
+  .chart-svg { width: 100%; min-width: 700px; }
+
+  /* Prediction cards */
+  .pred-grid { display: grid; grid-template-columns: 1fr; gap: 12px; margin-bottom: 24px; }
+
+  .pred-card {
+    background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+    padding: 16px 20px; display: grid; grid-template-columns: 48px 1fr 120px;
+    align-items: center; gap: 16px; transition: border-color 0.2s;
+  }
+  .pred-card:hover { border-color: rgba(255,255,255,0.1); }
+
+  .pred-status {
+    width: 48px; height: 48px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+  }
+  .pred-status.hit { background: rgba(34,197,94,0.15); }
+  .pred-status.partial { background: rgba(245,158,11,0.15); }
+  .pred-status.miss { background: rgba(239,68,68,0.15); }
+  .pred-status.pending { background: rgba(107,113,148,0.15); }
+
+  .pred-body { min-width: 0; }
+  .pred-body .pred-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+  .pred-body .pred-detail { font-size: 12px; color: var(--dim); }
+  .pred-body .pred-detail strong { color: var(--text); }
+
+  .pred-result { text-align: right; }
+  .pred-result .result-tag {
+    display: inline-block; padding: 4px 10px; border-radius: 6px;
+    font-size: 12px; font-weight: 600;
+  }
+  .result-tag.hit { background: rgba(34,197,94,0.15); color: var(--green); }
+  .result-tag.partial { background: rgba(245,158,11,0.15); color: var(--amber); }
+  .result-tag.miss { background: rgba(239,68,68,0.15); color: var(--red); }
+  .result-tag.pending { background: rgba(107,113,148,0.15); color: var(--dim); }
+
+  .pred-result .result-date { font-size: 11px; color: var(--dim); margin-top: 4px; }
+
+  /* Major prediction section */
+  .major-section {
+    background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+    padding: 24px; margin-bottom: 24px;
+  }
+  .major-section h3 { font-size: 18px; font-weight: 600; margin-bottom: 16px; }
+
+  .timeline {
+    position: relative;
+    padding-left: 32px;
+  }
+  .timeline::before {
+    content: ''; position: absolute; left: 10px; top: 8px; bottom: 8px;
+    width: 2px; background: var(--border);
+  }
+  .tl-item {
+    position: relative; padding-bottom: 24px;
+  }
+  .tl-item:last-child { padding-bottom: 0; }
+  .tl-dot {
+    position: absolute; left: -27px; top: 4px;
+    width: 14px; height: 14px; border-radius: 50%;
+    border: 2px solid var(--border); background: var(--bg);
+  }
+  .tl-dot.active { border-color: var(--blue); background: var(--blue); box-shadow: 0 0 8px rgba(59,130,246,0.4); }
+  .tl-dot.done { border-color: var(--green); background: var(--green); }
+  .tl-dot.future { border-color: var(--dim); }
+
+  .tl-date { font-size: 12px; color: var(--dim); margin-bottom: 2px; }
+  .tl-content { font-size: 14px; }
+  .tl-content .highlight { color: var(--amber); font-weight: 600; }
+  .tl-content .price { color: var(--cyan); font-weight: 600; font-variant-numeric: tabular-nums; }
+
+  /* Accuracy chart */
+  .accuracy-bar {
+    display: flex; height: 24px; border-radius: 6px; overflow: hidden;
+    margin: 16px 0 8px;
+  }
+  .acc-seg { transition: width 0.4s; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; }
+  .acc-seg.hit { background: var(--green); color: #fff; }
+  .acc-seg.partial { background: var(--amber); color: #000; }
+  .acc-seg.pending { background: rgba(107,113,148,0.3); color: var(--dim); }
+  .acc-seg.miss { background: var(--red); color: #fff; }
+
+  .acc-legend { display: flex; gap: 16px; flex-wrap: wrap; }
+  .acc-legend span { display: flex; align-items: center; gap: 4px; font-size: 12px; color: var(--dim); }
+  .acc-legend .dot { width: 8px; height: 8px; border-radius: 2px; }
+
+  /* SPX chart area */
+  .spx-chart { position: relative; height: 280px; margin: 16px 0; }
+
+  /* Canvas chart */
+  canvas { display: block; }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .pred-card { grid-template-columns: 40px 1fr; }
+    .pred-result { grid-column: 1 / -1; text-align: left; margin-top: 8px; }
+    .stats-row { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  /* CTA Monitor extras */
+  #signalMatrix tr:hover { background: rgba(255,255,255,0.02); }
+  #cotTable tr:hover { background: rgba(255,255,255,0.02); }
+  #ctaMonitor { scroll-margin-top: 20px; }
+
+  /* Tab Navigation */
+  .tab-nav {
+    display: flex;
+    gap: 4px;
+    background: var(--card);
+    padding: 6px;
+    border-radius: 12px;
+    margin-bottom: 24px;
+    border: 1px solid var(--border);
+  }
+  .tab-btn {
+    flex: 1;
+    padding: 12px 16px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--dim);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  .tab-btn:hover {
+    background: rgba(255,255,255,0.05);
+    color: var(--text);
+  }
+  .tab-btn.active {
+    background: var(--card2);
+    color: var(--text);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  }
+  .tab-btn .tab-icon { font-size: 16px; }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  .cta-pulse {
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <h1>TEACT 预测跟踪验证面板</h1>
+    <div class="sub">MasterPandaWu (capitalwatch) · 2026年2月-3月预测序列 · 实时验证</div>
+  </div>
+
+  <!-- Tab Navigation -->
+  <div class="tab-nav">
+    <button class="tab-btn active" onclick="switchTab('cta')">
+      <span class="tab-icon">💰</span> CTA 资金监控
+    </button>
+    <button class="tab-btn" onclick="switchTab('predict')">
+      <span class="tab-icon">📊</span> 预测验证
+    </button>
+    <button class="tab-btn" onclick="switchTab('spx')">
+      <span class="tab-icon">📈</span> SPX 走势
+    </button>
+  </div>
+
+  <!-- Tab 2: 预测验证 -->
+  <div id="tab-predict" class="tab-content">
+  <!-- Stats -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="label">总预测数</div>
+      <div class="value" style="color:var(--blue)">12</div>
+      <div class="detail">2月底 - 3月22日</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">精确命中</div>
+      <div class="value" style="color:var(--green)">8</div>
+      <div class="detail">点位+时间双精确</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">部分命中</div>
+      <div class="value" style="color:var(--amber)">1</div>
+      <div class="detail">方向对，精度差</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">待验证</div>
+      <div class="value" style="color:var(--dim)">3</div>
+      <div class="detail">中长期预测</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">已验证命中率</div>
+      <div class="value" style="color:var(--green)">89%</div>
+      <div class="detail">8/9 (展示偏差可能)</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">SPX 当前</div>
+      <div class="value" style="color:var(--cyan)">6,506</div>
+      <div class="detail">ATH: 7,002 · -7.1%</div>
+    </div>
+  </div>
+
+  <!-- Accuracy bar -->
+  <div class="chart-section">
+    <div class="chart-title">命中率分布</div>
+    <div class="accuracy-bar">
+      <div class="acc-seg hit" style="width:66.7%">精确命中 8</div>
+      <div class="acc-seg partial" style="width:8.3%">1</div>
+      <div class="acc-seg pending" style="width:25%">待验证 3</div>
+    </div>
+    <div class="acc-legend">
+      <span><span class="dot" style="background:var(--green)"></span>精确命中</span>
+      <span><span class="dot" style="background:var(--amber)"></span>部分命中</span>
+      <span><span class="dot" style="background:var(--red)"></span>未命中</span>
+      <span><span class="dot" style="background:rgba(107,113,148,0.3)"></span>待验证</span>
+    </div>
+  </div>
+
+  <!-- SPX Price Chart with predictions overlay -->
+  <div class="chart-section">
+    <div class="chart-title">
+      SPX 3月走势 vs TEACT 预测标记
+      <span class="tag">实际价格数据</span>
+    </div>
+    <canvas id="spxChart" height="320"></canvas>
+  </div>
+
+  <!-- Prediction cards -->
+  <div class="chart-section">
+    <div class="chart-title">逐项预测验证</div>
+    <div class="pred-grid" id="predGrid"></div>
+  </div>
+
+  <!-- Major forward predictions -->
+  <div class="major-section">
+    <h3>🔮 中长期大判断 — 跟踪中</h3>
+    <div class="timeline">
+      <div class="tl-item">
+        <div class="tl-dot done"></div>
+        <div class="tl-date">2026年3月20日 ✅ 已验证</div>
+        <div class="tl-content">
+          W[4] 扩大三角形完成，底部 <span class="price">@6,473</span>
+          <br>预测底部区间 6,425-6,550 · 实际 6,473 ✅
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot active"></div>
+        <div class="tl-date">2026年3月23日（下周一）⏳ 即将验证</div>
+        <div class="tl-content">
+          预测 <span class="highlight">85% 概率大级别反弹</span> / 15% 概率崩盘
+          <br>判断依据：W[5] 启动 + 水逆结束 + 特朗普可能周日声明
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot future"></div>
+        <div class="tl-date">2026年4月-5月 ⏳ 待验证</div>
+        <div class="tl-content">
+          W[5] 推动浪冲击 <span class="highlight">历史新高 (ATH)</span>
+          <br>需要超过 <span class="price">7,002</span> 才算确认
+          <br>月线 RSI 需制造新的背离
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot future"></div>
+        <div class="tl-date">2026年5月（或推迟至8月）⏳ 核心预测</div>
+        <div class="tl-content">
+          <span class="highlight">🚨 牛市最终顶部</span>
+          <br>条件：月线 RSI 背离 + 新 ATH = 卖出信号
+          <br>之后进入大级别熊市
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot future"></div>
+        <div class="tl-date">2026年下半年 ⏳ 最远期预测</div>
+        <div class="tl-content">
+          <span class="highlight">大级别熊市</span>开启
+          <br>多级别 RSI 背离全面确认后的系统性下跌
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Verification checklist for major prediction -->
+  <div class="major-section">
+    <h3>📋 大判断验证条件清单</h3>
+    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px;">
+
+      <div style="background:var(--card2); border-radius:8px; padding:16px;">
+        <div style="font-size:14px; font-weight:600; color:var(--bullish); margin-bottom:12px;">
+          🔴 牛市延续条件（需全部满足）
+        </div>
+        <div class="verify-items">
+          <div class="v-item" style="display:flex;gap:8px;align-items:flex-start;padding:6px 0;font-size:13px;">
+            <span style="color:var(--green)">✅</span>
+            <span>3月20日底部确立 @6,473 → <strong style="color:var(--green)">已确认</strong></span>
+          </div>
+          <div class="v-item" style="display:flex;gap:8px;align-items:flex-start;padding:6px 0;font-size:13px;">
+            <span style="color:var(--amber)">⏳</span>
+            <span>下周一（3/23）出现有力反弹 → <strong style="color:var(--amber)">明日验证</strong></span>
+          </div>
+          <div class="v-item" style="display:flex;gap:8px;align-items:flex-start;padding:6px 0;font-size:13px;">
+            <span style="color:var(--dim)">⬜</span>
+            <span>W[5] 推动浪展开，5浪结构清晰</span>
+          </div>
+          <div class="v-item" style="display:flex;gap:8px;align-items:flex-start;padding:6px 0;font-size:13px;">
+            <span style="color:var(--dim)">⬜</span>
+            <span>SPX 突破前高 7,002 创新 ATH</span>
+          </div>
+          <div class="v-item" style="display:flex;gap:8px;align-items:flex-start;padding:6px 0;font-size:13px;">
+            <span style="color:var(--dim)">⬜</span>
+            <span>月线 RSI 在新 ATH 处形成看跌背离</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="background:var(--card2); border-radius:8px; padding:16px;">
+        <div style="font-size:14px; font-weight:600; color:var(--bearish); margin-bottom:12px;">
+          🟢 熊市启动条件（终极卖出信号）
+        </div>
+        <div class="verify-items">
+          <div class="v-item" style="display:flex;gap:8px;align-items:flex-start;padding:6px 0;font-size:13px;">
+            <span style="color:var(--dim)">⬜</span>
+            <span>日线 RSI 背离 + 周线 RSI 背离 <strong style="color:var(--green)">已具备</strong></span>
+          </div>
+          <div class="v-item" style="display:flex;gap:8px;align-items:flex-start;padding:6px 0;font-size:13px;">
+            <span style="color:var(--dim)">⬜</span>
+            <span>月线 RSI 背离形成（需新 ATH）</span>
+          </div>
+          <div class="v-item" style="display:flex;gap:8px;align-items:flex-start;padding:6px 0;font-size:13px;">
+            <span style="color:var(--dim)">⬜</span>
+            <span>三级别 RSI 背离同时确认</span>
+          </div>
+          <div class="v-item" style="display:flex;gap:8px;align-items:flex-start;padding:6px 0;font-size:13px;">
+            <span style="color:var(--dim)">⬜</span>
+            <span>VIX 出现结构性突破（＞35持续）</span>
+          </div>
+          <div class="v-item" style="display:flex;gap:8px;align-items:flex-start;padding:6px 0;font-size:13px;">
+            <span style="color:var(--dim)">⬜</span>
+            <span>兴登堡凶兆再次密集触发</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="background:var(--card2); border-radius:8px; padding:16px;">
+        <div style="font-size:14px; font-weight:600; color:var(--red); margin-bottom:12px;">
+          🚨 预测否定条件（模型失效信号）
+        </div>
+        <div class="verify-items">
+          <div class="v-item" style="display:flex;gap:8px;align-items:flex-start;padding:6px 0;font-size:13px;">
+            <span style="color:var(--dim)">⬜</span>
+            <span>SPX 跌破 6,473 底部 → W[4] 计数失败</span>
+          </div>
+          <div class="v-item" style="display:flex;gap:8px;align-items:flex-start;padding:6px 0;font-size:13px;">
+            <span style="color:var(--dim)">⬜</span>
+            <span>下周一（3/23）出现崩盘而非反弹</span>
+          </div>
+          <div class="v-item" style="display:flex;gap:8px;align-items:flex-start;padding:6px 0;font-size:13px;">
+            <span style="color:var(--dim)">⬜</span>
+            <span>4月份无法展开 W[5] 结构</span>
+          </div>
+          <div class="v-item" style="display:flex;gap:8px;align-items:flex-start;padding:6px 0;font-size:13px;">
+            <span style="color:var(--dim)">⬜</span>
+            <span>6月前未创新 ATH → 时间窗口过期</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  </div><!-- end tab-predict -->
+
+  <!-- Tab 1: CTA 资金监控 -->
+  <div id="tab-cta" class="tab-content active">
+
+  <!-- CTA FUND FLOW MONITOR -->
+  <div class="major-section cta-section-content" id="ctaMonitor" style="border: 1px solid var(--purple); border-radius: 12px;">
+    <h3 style="display:flex;align-items:center;gap:10px;">
+      💰 CTA 量化资金流向监控
+      <span style="font-size:11px;padding:3px 10px;border-radius:4px;background:rgba(168,85,247,0.15);color:var(--purple);">新浪 + Tradingster</span>
+      <button onclick="refreshAllCTA()" style="margin-left:auto;background:rgba(59,130,246,0.15);border:1px solid var(--blue);color:var(--blue);padding:4px 12px;border-radius:6px;font-size:12px;cursor:pointer;">🔄 刷新数据</button>
+    </h3>
+
+    <!-- Live Market Pulse -->
+    <div style="margin-top:16px;">
+      <div style="font-size:14px;font-weight:600;margin-bottom:12px;color:var(--cyan);">📡 市场实时脉搏 <span style="font-size:11px;font-weight:400;color:var(--dim);">数据源: 新浪财经</span></div>
+      <div class="stats-row" style="margin-bottom:0;">
+        <div class="stat-card" id="spxLive">
+          <div class="label">SPX 实时</div>
+          <div class="value" id="spxPrice" style="color:var(--cyan)">--</div>
+          <div class="detail" id="spxChange">加载中...</div>
+        </div>
+        <div class="stat-card" id="esLive">
+          <div class="label">ES 期货 (E-mini)</div>
+          <div class="value" id="esPrice" style="color:var(--cyan)">--</div>
+          <div class="detail" id="esChange">加载中...</div>
+        </div>
+        <div class="stat-card" id="goldLive">
+          <div class="label">黄金 GC</div>
+          <div class="value" id="goldPrice" style="color:var(--amber)">--</div>
+          <div class="detail" id="goldChange">加载中...</div>
+        </div>
+        <div class="stat-card" id="oilLive">
+          <div class="label">原油 CL</div>
+          <div class="value" id="oilPrice" style="color:var(--text)">--</div>
+          <div class="detail" id="oilChange">加载中...</div>
+        </div>
+        <div class="stat-card" id="copperLive">
+          <div class="label">铜 HG</div>
+          <div class="value" id="copperPrice" style="color:var(--text)">--</div>
+          <div class="detail" id="copperChange">加载中...</div>
+        </div>
+        <div class="stat-card" id="usdjpyLive">
+          <div class="label">美元/日元</div>
+          <div class="value" id="usdjpyPrice" style="color:var(--text)">--</div>
+          <div class="detail" id="usdjpyChange">加载中...</div>
+        </div>
+      </div>
+      <div style="font-size:11px;color:var(--dim);margin-top:8px;text-align:right;" id="lastUpdate">数据更新时间: --</div>
+    </div>
+
+    <!-- Cross-Asset Signal Matrix -->
+    <div style="margin-top:24px;">
+      <div style="font-size:14px;font-weight:600;margin-bottom:12px;color:var(--purple);">🎯 跨品种 CTA 信号矩阵</div>
+      <div style="font-size:12px;color:var(--dim);margin-bottom:12px;">CTA 趋势跟踪基金同时交易多品种，当多品种同方向运动时 = 系统化资金在行动</div>
+      <div style="overflow-x:auto;">
+        <table style="width:100%;border-collapse:collapse;font-size:13px;" id="signalMatrix">
+          <thead>
+            <tr style="border-bottom:1px solid var(--border);">
+              <th style="text-align:left;padding:10px 12px;color:var(--dim);font-weight:500;">品种</th>
+              <th style="text-align:center;padding:10px 8px;color:var(--dim);font-weight:500;">价格</th>
+              <th style="text-align:center;padding:10px 8px;color:var(--dim);font-weight:500;">日涨跌</th>
+              <th style="text-align:center;padding:10px 8px;color:var(--dim);font-weight:500;">vs 20MA</th>
+              <th style="text-align:center;padding:10px 8px;color:var(--dim);font-weight:500;">vs 50MA</th>
+              <th style="text-align:center;padding:10px 8px;color:var(--dim);font-weight:500;">趋势信号</th>
+              <th style="text-align:center;padding:10px 8px;color:var(--dim);font-weight:500;">CTA 方向</th>
+            </tr>
+          </thead>
+          <tbody id="signalBody">
+            <tr><td colspan="7" style="text-align:center;padding:20px;color:var(--dim);">加载中...</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div style="margin-top:12px;padding:12px;background:var(--card2);border-radius:8px;" id="riskModeBox">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span style="font-size:20px;" id="riskIcon">⏳</span>
+          <div>
+            <div style="font-size:14px;font-weight:600;" id="riskLabel">分析中...</div>
+            <div style="font-size:12px;color:var(--dim);" id="riskDetail">等待数据加载完成</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CFTC COT Report -->
+    <div style="margin-top:24px;">
+      <div style="font-size:14px;font-weight:600;margin-bottom:4px;color:var(--green);">📊 CFTC COT 持仓报告（Non-Commercial）</div>
+      <div style="font-size:11px;color:var(--dim);margin-bottom:12px;">
+        数据来源: <a href="https://www.tradingster.com/cot/legacy-futures/13874A" target="_blank" style="color:var(--blue);text-decoration:none;">Tradingster</a> (CFTC Legacy Futures) · 每周五更新 · Non-Commercial = 投机者/CTA/对冲基金
+        · <a href="https://www.cftc.gov/MarketReports/CommitmentsofTraders/index.htm" target="_blank" style="color:var(--blue);text-decoration:none;">CFTC 官方</a>
+      </div>
+
+      <div style="overflow-x:auto;">
+        <table style="width:100%;border-collapse:collapse;font-size:13px;" id="cotTable">
+          <thead>
+            <tr style="border-bottom:1px solid var(--border);">
+              <th style="text-align:left;padding:10px 12px;color:var(--dim);font-weight:500;">合约</th>
+              <th style="text-align:center;padding:10px 8px;color:var(--dim);font-weight:500;">报告日期</th>
+              <th style="text-align:right;padding:10px 8px;color:var(--dim);font-weight:500;">多头</th>
+              <th style="text-align:right;padding:10px 8px;color:var(--dim);font-weight:500;">空头</th>
+              <th style="text-align:right;padding:10px 8px;color:var(--dim);font-weight:500;">净持仓</th>
+              <th style="text-align:center;padding:10px 8px;color:var(--dim);font-weight:500;">周变化</th>
+              <th style="text-align:center;padding:10px 8px;color:var(--dim);font-weight:500;">信号</th>
+            </tr>
+          </thead>
+          <tbody id="cotBody">
+            <tr><td colspan="7" style="text-align:center;padding:20px;color:var(--dim);">正在从 CFTC 获取数据...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- COT Net Position Chart -->
+    <div style="margin-top:24px;">
+      <div style="font-size:14px;font-weight:600;margin-bottom:12px;color:var(--blue);">📈 S&P 500 E-mini Non-Commercial 净持仓走势</div>
+      <canvas id="cotChart" height="240"></canvas>
+    </div>
+
+    <!-- Multi-Contract COT Trend Comparison -->
+    <div style="margin-top:24px;">
+      <div style="font-size:14px;font-weight:600;margin-bottom:4px;color:var(--purple);">📊 多品种 COT 净持仓趋势对比</div>
+      <div style="font-size:11px;color:var(--dim);margin-bottom:12px;">各品种净持仓相对走势 · 上升=净多增加/净空减少 · 观察资金是否同步流向</div>
+      <canvas id="cotMultiChart" height="300"></canvas>
+      <div id="cotMultiLegend" style="display:flex;flex-wrap:wrap;gap:12px;margin-top:8px;justify-content:center;"></div>
+    </div>
+
+    <!-- Multi-Asset Price Trend (Normalized) -->
+    <div style="margin-top:24px;">
+      <div style="font-size:14px;font-weight:600;margin-bottom:4px;color:var(--cyan);">📈 多品种价格趋势变化（归一化 %）</div>
+      <div style="font-size:11px;color:var(--dim);margin-bottom:12px;">各品种近期涨跌幅归一化对比 · 品种同涨同跌 = CTA 系统化资金在行动</div>
+      <canvas id="priceTrendChart" height="300"></canvas>
+      <div id="priceTrendLegend" style="display:flex;flex-wrap:wrap;gap:12px;margin-top:8px;justify-content:center;"></div>
+    </div>
+
+    <!-- CTA 数据解读指南 -->
+    <div style="margin-top:24px;padding:20px;background:var(--card2);border-radius:10px;border:1px solid var(--border);">
+      <div style="font-size:15px;font-weight:700;margin-bottom:14px;color:var(--amber);">📖 CTA 数据解读指南</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px;font-size:13px;line-height:1.8;">
+        <div>
+          <div style="font-weight:600;color:var(--blue);margin-bottom:6px;">🔹 什么是 COT 持仓？</div>
+          <div style="color:var(--dim);">
+            CFTC 每周发布的持仓报告，披露期货市场各类参与者的多空头寸。
+            <strong style="color:var(--text)">Non-Commercial</strong>（非商业）= 投机者、CTA 基金、对冲基金。
+            他们的仓位方向 ≈ 趋势跟踪策略的"共识方向"。
+          </div>
+        </div>
+        <div>
+          <div style="font-weight:600;color:var(--blue);margin-bottom:6px;">🔹 净持仓 = 多头 − 空头</div>
+          <div style="color:var(--dim);">
+            <span style="color:var(--bullish)">正值</span> = 投机者看多（红色），
+            <span style="color:var(--bearish)">负值</span> = 投机者看空（绿色）。
+            <br>绝对值越大 → 仓位越拥挤 → 反转风险越高。
+          </div>
+        </div>
+        <div>
+          <div style="font-weight:600;color:var(--blue);margin-bottom:6px;">🔹 周变化怎么看？</div>
+          <div style="color:var(--dim);">
+            周变化 > +10K = 大幅加多，看涨信号<br>
+            周变化 < −10K = 大幅加空，看跌信号<br>
+            <strong style="color:var(--amber)">关键：净空头 + 周变化转正 = 空头回补开始，可能是底部信号！</strong>
+          </div>
+        </div>
+        <div>
+          <div style="font-weight:600;color:var(--blue);margin-bottom:6px;">🔹 趋势图怎么读？</div>
+          <div style="color:var(--dim);">
+            <strong style="color:var(--text)">多品种同方向</strong> = CTA 系统化资金集体行动（最强信号）<br>
+            <strong style="color:var(--text)">品种分化</strong> = 资金在轮动，没有统一方向<br>
+            <strong style="color:var(--amber)">极端仓位 + 方向反转</strong> = 大行情可能即将启动
+          </div>
+        </div>
+        <div>
+          <div style="font-weight:600;color:var(--blue);margin-bottom:6px;">🔹 信号矩阵怎么用？</div>
+          <div style="color:var(--dim);">
+            价格 vs 20/50MA 位置 = CTA 趋势跟踪信号依据<br>
+            <span style="color:var(--bullish)">价格 > 20MA > 50MA</span> = 上升趋势确认<br>
+            <span style="color:var(--bearish)">价格 < 20MA < 50MA</span> = 下降趋势确认<br>
+            多品种同时确认同一趋势 → 最高置信度
+          </div>
+        </div>
+        <div>
+          <div style="font-weight:600;color:var(--blue);margin-bottom:6px;">🔹 Risk-On vs Risk-Off</div>
+          <div style="color:var(--dim);">
+            <span style="color:var(--bullish)">Risk-On</span>：股指↑ + 原油↑ + 铜↑ + 黄金↓ → 市场追逐风险<br>
+            <span style="color:var(--bearish)">Risk-Off</span>：股指↓ + 黄金↑ + 日元↑ → 资金涌入避风港<br>
+            CTA 基金跨品种同方向交易，看总体模式最重要
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CTA Position Summary -->
+    <div style="margin-top:24px;">
+      <div style="font-size:14px;font-weight:600;margin-bottom:12px;color:var(--amber);">📊 CTA 综合仓位信号</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;">
+        <div style="background:var(--card2);border-radius:8px;padding:14px;">
+          <div style="font-size:11px;color:var(--dim);">S&P 500 E-mini 净持仓</div>
+          <div style="font-size:20px;font-weight:700;margin:4px 0;" id="spxNetPos">--</div>
+          <div style="font-size:11px;color:var(--dim);" id="spxNetLabel">--</div>
+        </div>
+        <div style="background:var(--card2);border-radius:8px;padding:14px;">
+          <div style="font-size:11px;color:var(--dim);">周变化</div>
+          <div style="font-size:20px;font-weight:700;margin:4px 0;" id="spxWeekChg">--</div>
+          <div style="font-size:11px;color:var(--dim);" id="spxWeekLabel">--</div>
+        </div>
+        <div style="background:var(--card2);border-radius:8px;padding:14px;">
+          <div style="font-size:11px;color:var(--dim);">市场情绪</div>
+          <div style="font-size:20px;font-weight:700;margin:4px 0;" id="sentimentLevel">--</div>
+          <div style="font-size:11px;color:var(--dim);" id="sentimentLabel">--</div>
+        </div>
+        <div style="background:var(--card2);border-radius:8px;padding:14px;">
+          <div style="font-size:11px;color:var(--dim);">CTA 含义</div>
+          <div style="font-size:13px;font-weight:600;margin:4px 0;line-height:1.5;" id="ctaPositionSignal">--</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CTA Key Level Monitor -->
+    <div style="margin-top:24px;">
+      <div style="font-size:14px;font-weight:600;margin-bottom:12px;color:var(--red);">🚨 CTA 关键均线触发监控</div>
+      <div style="font-size:12px;color:var(--dim);margin-bottom:12px;">CTA 趋势跟踪模型大量使用均线交叉作为信号。当价格突破关键均线 + 成交量暴增 → 大概率是 CTA 程序化交易触发。</div>
+      <div id="maAlerts" style="display:grid;gap:8px;">
+        <div style="text-align:center;padding:16px;color:var(--dim);">加载中...</div>
+      </div>
+    </div>
+
+    <!-- Weekly Routine -->
+    <div style="margin-top:24px;padding:16px;background:var(--card2);border-radius:8px;border-left:3px solid var(--purple);">
+      <div style="font-size:14px;font-weight:600;margin-bottom:10px;">📋 CTA 资金监控每周 Routine</div>
+      <div style="font-size:13px;color:var(--dim);line-height:2;">
+        <div>🗓️ <strong style="color:var(--text)">周五 16:00 EST</strong> — CFTC 发布最新 COT 报告，刷新此面板查看 Managed Money 净持仓变化</div>
+        <div>📊 <strong style="color:var(--text)">每日收盘</strong> — 检查跨品种信号矩阵，判断 Risk-On/Off 状态</div>
+        <div>🔍 <strong style="color:var(--text)">关键时刻</strong> — SPX 突破/跌破 20/50/200 均线时，关注成交量是否异常放大</div>
+        <div>🐦 <strong style="color:var(--text)">每日速查</strong> — X 搜索 "CTA positioning" / "Charlie McElligott" 看投行估算</div>
+        <div>⚡ <strong style="color:var(--text)">实时</strong> — 多品种同方向剧烈运动 → CTA 系统化资金在行动</div>
+      </div>
+    </div>
+  </div>
+  </div><!-- end tab-cta -->
+
+  <!-- How to update - belongs to predict tab -->
+  <div class="major-section predict-section-content" style="border-left: 3px solid var(--blue);">
+    <h3>📌 如何持续更新此面板</h3>
+    <div style="font-size:13px; color:var(--dim); line-height:1.8;">
+      <p>1. <strong style="color:var(--text)">每日收盘后</strong> — 检查 SPX 价格，更新图表数据</p>
+      <p>2. <strong style="color:var(--text)">每周末</strong> — 对照新一期 capitalwatch 报告，更新预测状态</p>
+      <p>3. <strong style="color:var(--text)">关键日期</strong> — 3/23（反弹验证）、4-5月（ATH验证）、5-8月（大顶验证）</p>
+      <p>4. <strong style="color:var(--text)">否定信号</strong> — 一旦触发任何否定条件，立即标记模型失效</p>
+      <p style="margin-top:8px; color:var(--amber)">⚠️ 提醒：已验证的 8/9 命中率仅覆盖 1 个月数据，且可能存在展示偏差。中长期预测的验证才是真正的试金石。</p>
+    </div>
+  </div>
+
+  <!-- Tab 3: SPX 走势 -->
+  <div id="tab-spx" class="tab-content">
+    <div class="chart-section">
+      <div class="chart-title">
+        SPX 3月走势 vs TEACT 预测标记
+        <span class="tag">实际价格数据</span>
+      </div>
+      <div style="color:var(--dim);font-size:13px;padding:40px;text-align:center;">
+        SPX 走势图表将在此显示（内容从预测验证 tab 复制）
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ============ PREDICTIONS DATA ============
+const predictions = [
+  {
+    date: '2月底', prediction: '3月2日（满月）可能出现"小型黑色星期一"',
+    actual: '3/2-3 血月期间暴跌近200点（6,901→6,710）',
+    status: 'hit', category: '时间+事件'
+  },
+  {
+    date: '2月底', prediction: '普埃茨崩盘窗口：2/26-3/9 为高风险期',
+    actual: '该窗口内 SPX 从 ~6,900 持续下跌至 6,636',
+    status: 'hit', category: '周期'
+  },
+  {
+    date: '2月底', prediction: '兴登堡凶兆 5+ 次闪烁 → 顶部预警',
+    actual: '市场确实从 7,002 高位大幅回调 -7.6%',
+    status: 'hit', category: '周期'
+  },
+  {
+    date: '3月5日', prediction: '超级穹顶破位 → 下跌延续至3月下旬',
+    actual: '下跌确实延续至 3/20，穹顶形态准确',
+    status: 'hit', category: '趋势+形态'
+  },
+  {
+    date: '3月5日', prediction: '3/9 水逆中点 → 崩盘 + 深V反转',
+    actual: '3/9 盘前低至 6,636 → 收盘 6,796（单日 160+点V反转）',
+    status: 'hit', category: '占星+波浪'
+  },
+  {
+    date: '3月5日', prediction: '第一支撑位 6,600',
+    actual: '3/9 最低 6,636，接近 6,600',
+    status: 'hit', category: '技术'
+  },
+  {
+    date: '3月12日', prediction: '终极底部在 6,500 区域附近',
+    actual: '实际底部 6,473（3/20），误差仅 27 点',
+    status: 'hit', category: '波浪+技术'
+  },
+  {
+    date: '3月12日', prediction: '水逆结束日 3/20 = W[E] 浪完成',
+    actual: '3/20 确实触及最低 6,473 并反弹',
+    status: 'hit', category: '占星+波浪'
+  },
+  {
+    date: '3月18日', prediction: '底部概率分布：6,550 @50% / 6,600 @30% / 6,425 @20%',
+    actual: '实际 6,473 介于 50% 和 20% 路径之间',
+    status: 'partial', category: '技术'
+  },
+  {
+    date: '3月22日', prediction: '85% 下周一（3/23）大反弹 / 15% 崩盘',
+    actual: '明日验证',
+    status: 'pending', category: '波浪+占星'
+  },
+  {
+    date: '2月底', prediction: '牛市最终顶部在 2026年5月（或推迟至8月）',
+    actual: '需 SPX 先创 ATH 再确认顶部',
+    status: 'pending', category: '周期+波浪'
+  },
+  {
+    date: '2月底', prediction: '顶部之后 → 大级别熊市',
+    actual: '最远期预测，需数月验证',
+    status: 'pending', category: '周期+波浪'
+  },
+];
+
+// Render prediction cards
+const predGrid = document.getElementById('predGrid');
+predictions.forEach((p, i) => {
+  const icons = { hit: '✅', partial: '⚠️', miss: '❌', pending: '⏳' };
+  const labels = { hit: '精确命中', partial: '部分命中', miss: '未命中', pending: '待验证' };
+
+  predGrid.innerHTML += `
+    <div class="pred-card">
+      <div class="pred-status ${p.status}">${icons[p.status]}</div>
+      <div class="pred-body">
+        <div class="pred-title">${p.prediction}</div>
+        <div class="pred-detail">
+          <strong>实际：</strong>${p.actual}
+          <br><span style="color:var(--purple)">${p.category}</span>
+        </div>
+      </div>
+      <div class="pred-result">
+        <div class="result-tag ${p.status}">${labels[p.status]}</div>
+        <div class="result-date">${p.date}</div>
+      </div>
+    </div>
+  `;
+});
+
+// ============ SPX CHART ============
+const spxData = [
+  { date: '3/2',  o: 6824, h: 6901, l: 6797, c: 6882 },
+  { date: '3/3',  o: 6800, h: 6840, l: 6710, c: 6817 },
+  { date: '3/4',  o: 6832, h: 6886, l: 6812, c: 6870 },
+  { date: '3/5',  o: 6851, h: 6870, l: 6771, c: 6831 },
+  { date: '3/6',  o: 6769, h: 6773, l: 6712, c: 6740 },
+  { date: '3/9',  o: 6700, h: 6810, l: 6636, c: 6796 },
+  { date: '3/10', o: 6797, h: 6845, l: 6760, c: 6781 },
+  { date: '3/11', o: 6790, h: 6811, l: 6746, c: 6776 },
+  { date: '3/12', o: 6741, h: 6741, l: 6670, c: 6673 },
+  { date: '3/13', o: 6673, h: 6733, l: 6624, c: 6632 },
+  { date: '3/16', o: 6674, h: 6730, l: 6674, c: 6699 },
+  { date: '3/17', o: 6722, h: 6754, l: 6711, c: 6716 },
+  { date: '3/18', o: 6697, h: 6705, l: 6622, c: 6625 },
+  { date: '3/19', o: 6583, h: 6637, l: 6558, c: 6606 },
+  { date: '3/20', o: 6595, h: 6595, l: 6474, c: 6506 },
+];
+
+// Prediction markers on chart
+const markers = [
+  { dateIdx: 0, type: 'event', label: '血月/满月', color: '#a855f7', y: 'high' },
+  { dateIdx: 5, type: 'event', label: '水逆中点 → 深V', color: '#f59e0b', y: 'low' },
+  { dateIdx: 14, type: 'event', label: '水逆结束 → 底部', color: '#22c55e', y: 'low' },
+];
+
+// Key levels
+const levels = [
+  { price: 6600, label: 'SMA200 ~6,600', color: '#3b82f6', dash: [6,4] },
+  { price: 6550, label: 'FIB 6,550 (50%)', color: '#f59e0b', dash: [4,4] },
+  { price: 6425, label: 'W[E] 极端 6,425 (20%)', color: '#ef4444', dash: [8,4] },
+];
+
+function drawChart() {
+  const canvas = document.getElementById('spxChart');
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+
+  const rect = canvas.parentElement.getBoundingClientRect();
+  canvas.width = rect.width * dpr;
+  canvas.height = 320 * dpr;
+  canvas.style.width = rect.width + 'px';
+  canvas.style.height = '320px';
+  ctx.scale(dpr, dpr);
+
+  const W = rect.width;
+  const H = 320;
+  const pad = { top: 30, right: 100, bottom: 40, left: 60 };
+  const cw = W - pad.left - pad.right;
+  const ch = H - pad.top - pad.bottom;
+
+  // Price range
+  const allPrices = spxData.flatMap(d => [d.h, d.l]);
+  levels.forEach(l => allPrices.push(l.price));
+  const minP = Math.min(...allPrices) - 30;
+  const maxP = Math.max(...allPrices) + 30;
+
+  const xScale = (i) => pad.left + (i + 0.5) * (cw / spxData.length);
+  const yScale = (p) => pad.top + ch - ((p - minP) / (maxP - minP)) * ch;
+
+  // Background
+  ctx.fillStyle = 'transparent';
+  ctx.fillRect(0, 0, W, H);
+
+  // Grid
+  ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+  ctx.lineWidth = 1;
+  const gridSteps = 6;
+  for (let i = 0; i <= gridSteps; i++) {
+    const p = minP + (maxP - minP) * (i / gridSteps);
+    const y = yScale(p);
+    ctx.beginPath();
+    ctx.moveTo(pad.left, y);
+    ctx.lineTo(W - pad.right, y);
+    ctx.stroke();
+
+    ctx.fillStyle = '#6b7194';
+    ctx.font = '11px -apple-system, sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillText(Math.round(p).toLocaleString(), pad.left - 8, y + 4);
+  }
+
+  // Key levels
+  levels.forEach(lev => {
+    const y = yScale(lev.price);
+    ctx.strokeStyle = lev.color;
+    ctx.lineWidth = 1;
+    ctx.setLineDash(lev.dash);
+    ctx.beginPath();
+    ctx.moveTo(pad.left, y);
+    ctx.lineTo(W - pad.right, y);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    ctx.fillStyle = lev.color;
+    ctx.font = '10px -apple-system, sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText(lev.label, W - pad.right + 6, y + 3);
+  });
+
+  // Candlesticks
+  const barW = Math.min(cw / spxData.length * 0.6, 14);
+  spxData.forEach((d, i) => {
+    const x = xScale(i);
+    const isUp = d.c >= d.o;
+    const color = isUp ? '#ef4444' : '#22c55e';
+
+    // Wick
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(x, yScale(d.h));
+    ctx.lineTo(x, yScale(d.l));
+    ctx.stroke();
+
+    // Body
+    const bodyTop = yScale(Math.max(d.o, d.c));
+    const bodyBot = yScale(Math.min(d.o, d.c));
+    const bodyH = Math.max(bodyBot - bodyTop, 1);
+
+    ctx.fillStyle = isUp ? color : color;
+    ctx.globalAlpha = isUp ? 0.8 : 0.8;
+    ctx.fillRect(x - barW/2, bodyTop, barW, bodyH);
+    ctx.globalAlpha = 1;
+
+    // Date label
+    if (i % 2 === 0 || i === spxData.length - 1) {
+      ctx.fillStyle = '#6b7194';
+      ctx.font = '10px -apple-system, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(d.date, x, H - pad.bottom + 16);
+    }
+  });
+
+  // Markers
+  markers.forEach(m => {
+    const d = spxData[m.dateIdx];
+    const x = xScale(m.dateIdx);
+    const y = m.y === 'low' ? yScale(d.l) + 20 : yScale(d.h) - 20;
+
+    // Line to point
+    ctx.strokeStyle = m.color;
+    ctx.lineWidth = 1;
+    ctx.setLineDash([2,2]);
+    ctx.beginPath();
+    const pointY = m.y === 'low' ? yScale(d.l) : yScale(d.h);
+    ctx.moveTo(x, pointY);
+    ctx.lineTo(x, y);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Diamond
+    ctx.fillStyle = m.color;
+    ctx.beginPath();
+    ctx.moveTo(x, pointY - 4);
+    ctx.lineTo(x + 4, pointY);
+    ctx.lineTo(x, pointY + 4);
+    ctx.lineTo(x - 4, pointY);
+    ctx.closePath();
+    ctx.fill();
+
+    // Label bg
+    ctx.font = '10px -apple-system, sans-serif';
+    const tw = ctx.measureText(m.label).width + 8;
+    const lx = x - tw/2;
+    const ly = y - 7;
+    ctx.fillStyle = m.color;
+    ctx.globalAlpha = 0.9;
+    roundRect(ctx, lx, ly, tw, 14, 3);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+
+    ctx.fillStyle = '#fff';
+    ctx.textAlign = 'center';
+    ctx.fillText(m.label, x, y + 4);
+  });
+
+  // Bottom label
+  ctx.fillStyle = 'rgba(34,197,94,0.2)';
+  const bottomY = yScale(6474);
+  ctx.fillRect(pad.left, bottomY - 1, cw, 2);
+  ctx.fillStyle = '#22c55e';
+  ctx.font = 'bold 11px -apple-system, sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText('底部 6,474', W - pad.right + 6, bottomY + 4);
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
+drawChart();
+window.addEventListener('resize', () => {
+  drawChart();
+  if (cotData.processed) { renderCOTChart(); renderCOTMultiChart(); }
+  if (window._priceTrendData) renderPriceTrendChart();
+});
+
+// ============ CTA FUND FLOW MONITOR ============
+// 数据源: 本地代理 → 新浪财经(行情) + Tradingster(COT)
+
+const PROXY_BASE = 'http://127.0.0.1:8433';
+let proxyOnline = false;
+
+// Assets to track for cross-market CTA signal
+const ASSETS = [
+  { symbol: '^GSPC', name: 'S&P 500 (SPX)', id: 'spx', category: 'risk-on' },
+  { symbol: 'ES=F', name: 'E-mini S&P 500', id: 'es', category: 'risk-on' },
+  { symbol: 'GC=F', name: '黄金 GC', id: 'gold', category: 'risk-off' },
+  { symbol: 'CL=F', name: '原油 WTI', id: 'oil', category: 'risk-on' },
+  { symbol: 'HG=F', name: '铜 HG', id: 'copper', category: 'risk-on' },
+  { symbol: 'JPY=X', name: '美元/日元', id: 'usdjpy', category: 'risk-on' },
+];
+
+// COT contracts to track
+const COT_CONTRACTS = [
+  { cftcCode: '13874A', displayName: 'S&P 500 E-mini' },
+  { cftcCode: '209742', displayName: 'Nasdaq 100' },
+  { cftcCode: '020601', displayName: 'US 国债' },
+  { cftcCode: '088691', displayName: '黄金' },
+  { cftcCode: '067651', displayName: 'WTI 原油' },
+];
+
+// Store fetched data globally
+let assetData = {};
+let cotData = {};
+
+// --- Check proxy availability ---
+async function checkProxy() {
+  try {
+    const resp = await fetch(`${PROXY_BASE}/api/health`, { signal: AbortSignal.timeout(3000) });
+    if (resp.ok) { proxyOnline = true; return true; }
+  } catch(e) {}
+  proxyOnline = false;
+  return false;
+}
+
+// --- Fetch all asset data via proxy ---
+async function fetchAllAssets() {
+  if (!proxyOnline) return;
+
+  const symbols = ASSETS.map(a => a.symbol).join(',');
+  try {
+    const resp = await fetch(`${PROXY_BASE}/api/quotes?symbols=${encodeURIComponent(symbols)}`, { signal: AbortSignal.timeout(10000) });
+    const json = await resp.json();
+    if (!json.ok) return;
+
+    const quotes = json.data;
+
+    // Fetch K-line data for all assets to compute MAs
+    const klineResults = {};
+    const klineFetches = ASSETS.map(async (asset) => {
+      try {
+        const kresp = await fetch(`${PROXY_BASE}/api/klines?symbol=${encodeURIComponent(asset.symbol)}&num=60`, { signal: AbortSignal.timeout(10000) });
+        const kjson = await kresp.json();
+        if (kjson.ok && kjson.data) klineResults[asset.id] = kjson.data;
+      } catch(e) { console.warn(`Klines fetch failed for ${asset.id}:`, e); }
+    });
+    await Promise.allSettled(klineFetches);
+
+    ASSETS.forEach(asset => {
+      const q = quotes[asset.symbol];
+      if (!q) return;
+
+      let ma20 = null, ma50 = null;
+      const klines = klineResults[asset.id];
+      if (klines && klines.length >= 20) {
+        const closes = klines.map(k => k.close);
+        ma20 = closes.slice(-20).reduce((a,b) => a+b, 0) / 20;
+        if (closes.length >= 50) {
+          ma50 = closes.slice(-50).reduce((a,b) => a+b, 0) / 50;
+        }
+      }
+
+      assetData[asset.id] = {
+        ...asset,
+        price: q.price,
+        prevClose: q.prevClose,
+        change: q.change || 0,
+        ma20, ma50,
+        open: q.open,
+        high: q.high,
+        low: q.low,
+        source: q.source,
+      };
+    });
+  } catch(e) {
+    console.error('fetchAllAssets failed:', e);
+  }
+}
+
+// --- Fetch COT data via proxy ---
+async function fetchCOTData() {
+  if (!proxyOnline) {
+    generateSimulatedCOT();
+    return;
+  }
+
+  try {
+    const resp = await fetch(`${PROXY_BASE}/api/cot`, { signal: AbortSignal.timeout(20000) });
+    const json = await resp.json();
+
+    if (!json.ok || !json.data || Object.keys(json.data).length === 0) {
+      generateSimulatedCOT();
+      return;
+    }
+
+    cotData.processed = {};
+    cotData.simulated = false;
+
+    for (const [code, info] of Object.entries(json.data)) {
+      const rows = info.data || [];
+      if (rows.length < 2) continue;
+
+      const latest = rows[rows.length - 1];
+      const prev = rows[rows.length - 2];
+      const netPos = latest.netPos;
+      const prevNet = prev.netPos;
+      const weekChange = netPos - prevNet;
+
+      // Find matching display name
+      const contract = COT_CONTRACTS.find(c => c.cftcCode === code);
+      const displayName = contract ? contract.displayName : info.name || code;
+
+      cotData.processed[code] = {
+        cftcCode: code,
+        displayName: displayName,
+        date: latest.date,
+        longPos: latest.longPos,
+        shortPos: latest.shortPos,
+        netPos, weekChange, prevNet,
+        history: rows.slice(-12).map(r => ({ date: r.date, net: r.netPos })),
+      };
+    }
+  } catch(e) {
+    console.error('fetchCOTData failed:', e);
+    generateSimulatedCOT();
+  }
+}
+
+function generateSimulatedCOT() {
+  // Fallback: based on actual market conditions (SPX ~7002 → ~6473)
+  const today = new Date();
+  const dates = [];
+  for (let i = 11; i >= 0; i--) {
+    const d = new Date(today);
+    d.setDate(d.getDate() - i * 7);
+    dates.push(d.toISOString().split('T')[0]);
+  }
+
+  const simData = [
+    { code: '13874A', name: 'S&P 500 E-mini', history: [185000,172000,155000,138000,112000,95000,78000,62000,48000,35000,22000,15000], long: 245000, short: 230000 },
+    { code: '209742', name: 'Nasdaq 100', history: [52000,48000,41000,35000,28000,22000,16000,10000,5000,-2000,-8000,-12000], long: 68000, short: 80000 },
+    { code: '020601', name: 'US 国债', history: [-95000,-88000,-78000,-65000,-52000,-42000,-35000,-28000,-22000,-15000,-8000,-2000], long: 185000, short: 187000 },
+    { code: '088691', name: '黄金', history: [142000,148000,155000,162000,168000,175000,182000,188000,195000,202000,208000,215000], long: 298000, short: 83000 },
+    { code: '067651', name: 'WTI 原油', history: [85000,78000,72000,65000,58000,52000,48000,42000,38000,32000,28000,25000], long: 185000, short: 160000 },
+  ];
+
+  cotData.processed = {};
+  simData.forEach(s => {
+    const netPos = s.long - s.short;
+    const prevNet = s.history[s.history.length - 2];
+    cotData.processed[s.code] = {
+      cftcCode: s.code,
+      displayName: s.name,
+      date: dates[dates.length - 1],
+      longPos: s.long, shortPos: s.short,
+      netPos, weekChange: netPos - prevNet, prevNet,
+      history: dates.map((d, i) => ({ date: d, net: s.history[i] })),
+    };
+  });
+  cotData.simulated = true;
+}
+
+// --- Render functions ---
+function renderLiveQuotes() {
+  const items = [
+    { id: 'spx', priceEl: 'spxPrice', changeEl: 'spxChange' },
+    { id: 'es', priceEl: 'esPrice', changeEl: 'esChange' },
+    { id: 'gold', priceEl: 'goldPrice', changeEl: 'goldChange' },
+    { id: 'oil', priceEl: 'oilPrice', changeEl: 'oilChange' },
+    { id: 'copper', priceEl: 'copperPrice', changeEl: 'copperChange' },
+    { id: 'usdjpy', priceEl: 'usdjpyPrice', changeEl: 'usdjpyChange' },
+  ];
+
+  items.forEach(item => {
+    const d = assetData[item.id];
+    const priceEl = document.getElementById(item.priceEl);
+    const changeEl = document.getElementById(item.changeEl);
+    if (!priceEl || !changeEl) return;
+
+    if (d && d.price) {
+      const priceStr = d.price >= 1000 ? d.price.toLocaleString('en-US', {maximumFractionDigits:0}) :
+                       d.price >= 100 ? d.price.toFixed(1) : d.price.toFixed(2);
+      priceEl.textContent = priceStr;
+
+      const changeStr = (d.change >= 0 ? '+' : '') + d.change.toFixed(2) + '%';
+      changeEl.textContent = changeStr;
+      // Chinese convention: up = red, down = green
+      changeEl.style.color = d.change >= 0 ? 'var(--bullish)' : 'var(--bearish)';
+      priceEl.style.color = d.change >= 0 ? 'var(--bullish)' : 'var(--bearish)';
+    } else {
+      priceEl.textContent = 'N/A';
+      changeEl.textContent = '无数据';
+      changeEl.style.color = 'var(--dim)';
+    }
+  });
+
+  // Update timestamp + source indicator
+  const now = new Date();
+  const srcTag = proxyOnline ? '✅ 新浪财经 + Tradingster' : '⚠️ 代理离线';
+  document.getElementById('lastUpdate').textContent =
+    `数据更新: ${now.toLocaleDateString('zh-CN')} ${now.toLocaleTimeString('zh-CN')} · ${srcTag}`;
+}
+
+function renderSignalMatrix() {
+  const tbody = document.getElementById('signalBody');
+  let html = '';
+  let riskOnSignals = 0;
+  let riskOffSignals = 0;
+  let totalSignals = 0;
+
+  ASSETS.forEach(asset => {
+    const d = assetData[asset.id];
+    if (!d || !d.price) {
+      html += `<tr><td style="padding:10px 12px;">${asset.name}</td><td colspan="6" style="text-align:center;color:var(--dim);">无数据</td></tr>`;
+      return;
+    }
+
+    const priceStr = d.price >= 1000 ? d.price.toLocaleString('en-US', {maximumFractionDigits:0}) :
+                     d.price >= 100 ? d.price.toFixed(1) : d.price.toFixed(2);
+    const changeStr = (d.change >= 0 ? '+' : '') + d.change.toFixed(2) + '%';
+    const changeColor = d.change >= 0 ? 'var(--bullish)' : 'var(--bearish)';
+
+    // MA signals
+    let ma20Signal = '--', ma50Signal = '--';
+    let ma20Color = 'var(--dim)', ma50Color = 'var(--dim)';
+
+    if (d.ma20) {
+      const pctVs20 = ((d.price - d.ma20) / d.ma20 * 100).toFixed(1);
+      ma20Signal = (pctVs20 >= 0 ? '+' : '') + pctVs20 + '%';
+      ma20Color = pctVs20 >= 0 ? 'var(--bullish)' : 'var(--bearish)';
+    }
+    if (d.ma50) {
+      const pctVs50 = ((d.price - d.ma50) / d.ma50 * 100).toFixed(1);
+      ma50Signal = (pctVs50 >= 0 ? '+' : '') + pctVs50 + '%';
+      ma50Color = pctVs50 >= 0 ? 'var(--bullish)' : 'var(--bearish)';
+    }
+
+    // Trend signal
+    let trendSignal = '中性';
+    let trendIcon = '⚪';
+    let trendColor = 'var(--dim)';
+    const aboveBothMA = d.ma20 && d.ma50 && d.price > d.ma20 && d.price > d.ma50;
+    const belowBothMA = d.ma20 && d.ma50 && d.price < d.ma20 && d.price < d.ma50;
+
+    if (aboveBothMA) { trendSignal = '上升趋势'; trendIcon = '📈'; trendColor = 'var(--bullish)'; }
+    else if (belowBothMA) { trendSignal = '下降趋势'; trendIcon = '📉'; trendColor = 'var(--bearish)'; }
+    else { trendSignal = '震荡'; trendIcon = '↔️'; }
+
+    // CTA direction inference
+    let ctaDir = '观望', ctaDirColor = 'var(--dim)';
+    if (asset.id === 'vix') {
+      // VIX is inverse — rising VIX = risk-off
+      if (belowBothMA) { ctaDir = '做空 VIX (风险偏好)'; ctaDirColor = 'var(--bullish)'; riskOnSignals++; }
+      else if (aboveBothMA) { ctaDir = '做多 VIX (避险)'; ctaDirColor = 'var(--bearish)'; riskOffSignals++; }
+    } else if (asset.category === 'risk-on') {
+      if (aboveBothMA) { ctaDir = '做多 ↑'; ctaDirColor = 'var(--bullish)'; riskOnSignals++; }
+      else if (belowBothMA) { ctaDir = '做空 ↓'; ctaDirColor = 'var(--bearish)'; riskOffSignals++; }
+    } else if (asset.category === 'risk-off') {
+      // Safe havens (gold, bonds) — rising = risk-off
+      if (aboveBothMA) { ctaDir = '做多 ↑ (避险)'; ctaDirColor = 'var(--amber)'; riskOffSignals++; }
+      else if (belowBothMA) { ctaDir = '做空 ↓'; ctaDirColor = 'var(--dim)'; riskOnSignals++; }
+    }
+    totalSignals++;
+
+    html += `
+      <tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
+        <td style="padding:10px 12px;font-weight:500;">${asset.name}</td>
+        <td style="text-align:center;padding:10px 8px;font-variant-numeric:tabular-nums;">${priceStr}</td>
+        <td style="text-align:center;padding:10px 8px;color:${changeColor};font-weight:600;">${changeStr}</td>
+        <td style="text-align:center;padding:10px 8px;color:${ma20Color};font-size:12px;">${ma20Signal}</td>
+        <td style="text-align:center;padding:10px 8px;color:${ma50Color};font-size:12px;">${ma50Signal}</td>
+        <td style="text-align:center;padding:10px 8px;color:${trendColor};">${trendIcon} ${trendSignal}</td>
+        <td style="text-align:center;padding:10px 8px;color:${ctaDirColor};font-weight:600;">${ctaDir}</td>
+      </tr>
+    `;
+  });
+
+  tbody.innerHTML = html;
+
+  // Risk mode determination
+  const riskBox = document.getElementById('riskModeBox');
+  const riskIcon = document.getElementById('riskIcon');
+  const riskLabel = document.getElementById('riskLabel');
+  const riskDetail = document.getElementById('riskDetail');
+
+  if (riskOnSignals > riskOffSignals + 2) {
+    riskIcon.textContent = '🟢';
+    riskLabel.textContent = 'RISK-ON 模式';
+    riskLabel.style.color = 'var(--bullish)';
+    riskDetail.textContent = `${riskOnSignals} 品种 Risk-On vs ${riskOffSignals} 品种 Risk-Off → CTA 系统化资金倾向做多风险资产`;
+    riskBox.style.borderLeft = '3px solid var(--bullish)';
+  } else if (riskOffSignals > riskOnSignals + 2) {
+    riskIcon.textContent = '🔴';
+    riskLabel.textContent = 'RISK-OFF 模式';
+    riskLabel.style.color = 'var(--bearish)';
+    riskDetail.textContent = `${riskOffSignals} 品种 Risk-Off vs ${riskOnSignals} 品种 Risk-On → CTA 系统化资金在抛售风险资产 / 买入避险资产`;
+    riskBox.style.borderLeft = '3px solid var(--bearish)';
+  } else {
+    riskIcon.textContent = '🟡';
+    riskLabel.textContent = '混合 / 过渡模式';
+    riskLabel.style.color = 'var(--amber)';
+    riskDetail.textContent = `Risk-On ${riskOnSignals} vs Risk-Off ${riskOffSignals} → 信号分散，CTA 可能在轮动或减仓`;
+    riskBox.style.borderLeft = '3px solid var(--amber)';
+  }
+}
+
+function renderCOTTable() {
+  const tbody = document.getElementById('cotBody');
+  const processed = cotData.processed;
+
+  if (!processed || Object.keys(processed).length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--dim);">CFTC 数据获取失败，请稍后重试</td></tr>';
+    return;
+  }
+
+  let html = '';
+  Object.values(processed).forEach(c => {
+    const netColor = c.netPos >= 0 ? 'var(--bullish)' : 'var(--bearish)';
+    const weekColor = c.weekChange >= 0 ? 'var(--bullish)' : 'var(--bearish)';
+    const weekIcon = c.weekChange >= 0 ? '↑' : '↓';
+
+    let signal = '', signalColor = 'var(--dim)';
+    if (c.weekChange > 5000) { signal = '🔴 加多'; signalColor = 'var(--bullish)'; }
+    else if (c.weekChange < -5000) { signal = '🟢 加空'; signalColor = 'var(--bearish)'; }
+    else if (c.weekChange > 0) { signal = '略多'; signalColor = 'var(--bullish)'; }
+    else if (c.weekChange < 0) { signal = '略空'; signalColor = 'var(--bearish)'; }
+    else { signal = '持平'; }
+
+    // Tradingster 验证链接
+    const tradingsterUrl = `https://www.tradingster.com/cot/legacy-futures/${c.cftcCode}`;
+    const nameLink = `<a href="${tradingsterUrl}" target="_blank" style="color:inherit;text-decoration:none;border-bottom:1px dashed var(--dim);" title="点击查看 Tradingster 原始数据">${c.displayName}</a>`;
+
+    html += `
+      <tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
+        <td style="padding:10px 12px;font-weight:500;">${nameLink}</td>
+        <td style="text-align:center;padding:10px 8px;font-size:12px;color:var(--dim);">${c.date || '--'}</td>
+        <td style="text-align:right;padding:10px 8px;font-variant-numeric:tabular-nums;color:var(--bullish);">${(c.longPos || 0).toLocaleString()}</td>
+        <td style="text-align:right;padding:10px 8px;font-variant-numeric:tabular-nums;color:var(--bearish);">${(c.shortPos || 0).toLocaleString()}</td>
+        <td style="text-align:right;padding:10px 8px;font-weight:700;color:${netColor};font-variant-numeric:tabular-nums;">${c.netPos >= 0 ? '+' : ''}${(c.netPos || 0).toLocaleString()}</td>
+        <td style="text-align:center;padding:10px 8px;color:${weekColor};font-weight:600;">${weekIcon} ${Math.abs(c.weekChange || 0).toLocaleString()}</td>
+        <td style="text-align:center;padding:10px 8px;color:${signalColor};font-weight:600;">${signal}</td>
+      </tr>
+    `;
+  });
+
+  if (cotData.simulated) {
+    html += `<tr><td colspan="7" style="text-align:center;padding:8px;font-size:11px;color:var(--amber);">⚠️ CFTC API 暂不可达，当前显示基于市场走势的估算数据</td></tr>`;
+  }
+
+  tbody.innerHTML = html;
+}
+
+function renderCOTChart() {
+  const canvas = document.getElementById('cotChart');
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.parentElement.getBoundingClientRect();
+
+  canvas.width = rect.width * dpr;
+  canvas.height = 240 * dpr;
+  canvas.style.width = rect.width + 'px';
+  canvas.style.height = '240px';
+  ctx.scale(dpr, dpr);
+
+  const W = rect.width;
+  const H = 240;
+  const pad = { top: 20, right: 80, bottom: 30, left: 70 };
+  const cw = W - pad.left - pad.right;
+  const ch = H - pad.top - pad.bottom;
+
+  // Get S&P 500 E-mini COT history
+  const spxCOT = cotData.processed && cotData.processed['13874A'];
+  if (!spxCOT || !spxCOT.history || spxCOT.history.length < 2) {
+    ctx.fillStyle = 'var(--dim)';
+    ctx.font = '14px -apple-system, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('COT 历史数据不足', W/2, H/2);
+    return;
+  }
+
+  const history = spxCOT.history;
+  const values = history.map(h => h.net);
+  const minV = Math.min(...values, 0);
+  const maxV = Math.max(...values, 0);
+  const range = maxV - minV || 1;
+
+  const xScale = (i) => pad.left + (i / (history.length - 1)) * cw;
+  const yScale = (v) => pad.top + ch - ((v - minV) / range) * ch;
+
+  // Background
+  ctx.clearRect(0, 0, W, H);
+
+  // Zero line
+  const zeroY = yScale(0);
+  ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+  ctx.lineWidth = 1;
+  ctx.setLineDash([4, 4]);
+  ctx.beginPath();
+  ctx.moveTo(pad.left, zeroY);
+  ctx.lineTo(W - pad.right, zeroY);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  ctx.fillStyle = '#6b7194';
+  ctx.font = '10px -apple-system, sans-serif';
+  ctx.textAlign = 'right';
+  ctx.fillText('0', pad.left - 8, zeroY + 4);
+
+  // Grid
+  const gridSteps = 4;
+  for (let i = 0; i <= gridSteps; i++) {
+    const v = minV + range * (i / gridSteps);
+    const y = yScale(v);
+    ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+    ctx.beginPath();
+    ctx.moveTo(pad.left, y);
+    ctx.lineTo(W - pad.right, y);
+    ctx.stroke();
+
+    ctx.fillStyle = '#6b7194';
+    ctx.font = '10px -apple-system, sans-serif';
+    ctx.textAlign = 'right';
+    const label = v >= 1000 ? (v/1000).toFixed(0) + 'K' : v <= -1000 ? (v/1000).toFixed(0) + 'K' : v.toFixed(0);
+    ctx.fillText(label, pad.left - 8, y + 4);
+  }
+
+  // Area fill
+  ctx.beginPath();
+  ctx.moveTo(xScale(0), zeroY);
+  history.forEach((h, i) => {
+    ctx.lineTo(xScale(i), yScale(h.net));
+  });
+  ctx.lineTo(xScale(history.length - 1), zeroY);
+  ctx.closePath();
+
+  const gradient = ctx.createLinearGradient(0, pad.top, 0, H - pad.bottom);
+  if (values[values.length - 1] >= 0) {
+    gradient.addColorStop(0, 'rgba(239,68,68,0.3)');
+    gradient.addColorStop(1, 'rgba(239,68,68,0.02)');
+  } else {
+    gradient.addColorStop(0, 'rgba(34,197,94,0.02)');
+    gradient.addColorStop(1, 'rgba(34,197,94,0.3)');
+  }
+  ctx.fillStyle = gradient;
+  ctx.fill();
+
+  // Line
+  ctx.beginPath();
+  history.forEach((h, i) => {
+    if (i === 0) ctx.moveTo(xScale(i), yScale(h.net));
+    else ctx.lineTo(xScale(i), yScale(h.net));
+  });
+  ctx.strokeStyle = values[values.length - 1] >= 0 ? '#ef4444' : '#22c55e';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // Data points
+  history.forEach((h, i) => {
+    const x = xScale(i);
+    const y = yScale(h.net);
+    ctx.beginPath();
+    ctx.arc(x, y, 3, 0, Math.PI * 2);
+    ctx.fillStyle = h.net >= 0 ? '#ef4444' : '#22c55e';
+    ctx.fill();
+
+    // Date labels
+    if (i % 2 === 0 || i === history.length - 1) {
+      ctx.fillStyle = '#6b7194';
+      ctx.font = '9px -apple-system, sans-serif';
+      ctx.textAlign = 'center';
+      const dateLabel = h.date ? h.date.slice(5) : '';
+      ctx.fillText(dateLabel, x, H - 8);
+    }
+  });
+
+  // Latest value label
+  const lastV = values[values.length - 1];
+  const lastX = xScale(history.length - 1);
+  const lastY = yScale(lastV);
+  const lastLabel = lastV >= 1000 ? '+' + (lastV/1000).toFixed(0) + 'K' :
+                    lastV <= -1000 ? (lastV/1000).toFixed(0) + 'K' : lastV.toFixed(0);
+  ctx.fillStyle = lastV >= 0 ? '#ef4444' : '#22c55e';
+  ctx.font = 'bold 11px -apple-system, sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText(lastLabel, lastX + 8, lastY + 4);
+
+  // Title
+  ctx.fillStyle = '#6b7194';
+  ctx.font = '10px -apple-system, sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText('Non-Commercial 净持仓（合约数）', pad.left, 12);
+}
+
+function renderPositionSummary() {
+  const spxCOT = cotData.processed && cotData.processed['13874A'];
+  if (!spxCOT) return;
+
+  const netPos = spxCOT.netPos;
+  const weekChg = spxCOT.weekChange;
+
+  // S&P net position
+  const netStr = netPos >= 0 ? '+' + (netPos / 1000).toFixed(1) + 'K' : (netPos / 1000).toFixed(1) + 'K';
+  const netEl = document.getElementById('spxNetPos');
+  netEl.textContent = netStr;
+  netEl.style.color = netPos >= 0 ? 'var(--bullish)' : 'var(--bearish)';
+
+  const netLabel = netPos > 50000 ? '强烈净多头' :
+                   netPos > 0 ? '净多头' :
+                   netPos > -50000 ? '净空头' : '强烈净空头';
+  document.getElementById('spxNetLabel').textContent = netLabel;
+
+  // Week change
+  const weekStr = (weekChg >= 0 ? '+' : '') + (weekChg / 1000).toFixed(1) + 'K';
+  const weekEl = document.getElementById('spxWeekChg');
+  weekEl.textContent = weekStr;
+  weekEl.style.color = weekChg >= 0 ? 'var(--bullish)' : 'var(--bearish)';
+
+  const weekLabel = weekChg > 10000 ? '大幅加多 — 看涨信号' :
+                    weekChg > 0 ? '小幅加多' :
+                    weekChg > -10000 ? '小幅减多/加空' : '大幅加空 — 看跌信号';
+  document.getElementById('spxWeekLabel').textContent = weekLabel;
+
+  // Sentiment
+  let sentText = '', sentColor = '';
+  const goldCOT = cotData.processed && cotData.processed['088691'];
+  const bondCOT = cotData.processed && cotData.processed['020601'];
+
+  const goldNet = goldCOT ? goldCOT.netPos : 0;
+  const bondNet = bondCOT ? bondCOT.netPos : 0;
+
+  // 综合判断：SPX 净空 + 黄金/国债净多 = 避险情绪
+  if (netPos < -50000 && goldNet > 100000) {
+    sentText = '🔴 强避险'; sentColor = 'var(--red)';
+  } else if (netPos < 0 && goldNet > 50000) {
+    sentText = '🟠 避险'; sentColor = 'var(--amber)';
+  } else if (netPos > 50000 && goldNet < 50000) {
+    sentText = '🟢 风险偏好'; sentColor = 'var(--green)';
+  } else if (netPos > 0) {
+    sentText = '⚪ 中性偏多'; sentColor = 'var(--text)';
+  } else {
+    sentText = '🟡 谨慎'; sentColor = 'var(--amber)';
+  }
+  const sentEl = document.getElementById('sentimentLevel');
+  sentEl.textContent = sentText;
+  sentEl.style.color = sentColor;
+
+  document.getElementById('sentimentLabel').textContent =
+    `SPX净仓 ${netStr} · 黄金净仓 ${goldNet >= 0 ? '+' : ''}${(goldNet/1000).toFixed(0)}K`;
+
+  // CTA implication
+  let ctaSig = '';
+  if (netPos < -80000 && weekChg > 10000) {
+    ctaSig = '极端净空头 + 开始回补 → 空头拥挤，反弹概率大';
+  } else if (netPos < -80000) {
+    ctaSig = '极端净空头 → CTA 重仓做空，趋势延续但需警惕轧空';
+  } else if (netPos < 0 && weekChg > 0) {
+    ctaSig = '净空头减仓中 → CTA 可能正在平空，关注趋势反转信号';
+  } else if (netPos < 0) {
+    ctaSig = '净空头 → CTA 仍然看空股指，下行趋势未变';
+  } else if (netPos > 80000) {
+    ctaSig = '高度净多头 → 做多拥挤，警惕回调风险';
+  } else if (netPos > 0 && weekChg < -10000) {
+    ctaSig = '净多头急速减仓 → CTA 正在退出多头，可能转空';
+  } else {
+    ctaSig = '仓位温和 → 等待更强趋势信号';
+  }
+  document.getElementById('ctaPositionSignal').textContent = ctaSig;
+}
+
+function renderMAAlerts() {
+  const container = document.getElementById('maAlerts');
+  let html = '';
+
+  const keyAssets = ['spx', 'es', 'gold', 'oil', 'copper'];
+  keyAssets.forEach(id => {
+    const d = assetData[id];
+    if (!d || !d.price || !d.ma20) return;
+
+    const name = d.name;
+    const price = d.price;
+    const ma20 = d.ma20;
+    const ma50 = d.ma50;
+
+    const dist20 = ((price - ma20) / ma20 * 100);
+    const dist50 = ma50 ? ((price - ma50) / ma50 * 100) : null;
+
+    let alerts = [];
+
+    // Check 20MA proximity (within 0.5%)
+    if (Math.abs(dist20) < 0.5) {
+      alerts.push({ level: '🟡', text: `价格逼近 20日均线（距离 ${dist20.toFixed(2)}%）`, detail: 'CTA 短期趋势信号可能切换' });
+    } else if (dist20 > 0 && dist20 < 2) {
+      alerts.push({ level: '📊', text: `价格刚突破 20MA（+${dist20.toFixed(1)}%）`, detail: '观察突破是否有成交量确认' });
+    } else if (dist20 < 0 && dist20 > -2) {
+      alerts.push({ level: '📊', text: `价格刚跌破 20MA（${dist20.toFixed(1)}%）`, detail: '短期 CTA 做空信号可能触发' });
+    }
+
+    // Check 50MA proximity
+    if (dist50 !== null && Math.abs(dist50) < 0.5) {
+      alerts.push({ level: '🔴', text: `价格逼近 50日均线（距离 ${dist50.toFixed(2)}%）`, detail: '⚠️ 关键触发位！CTA 中期信号切换点' });
+    }
+
+    // 20MA cross 50MA (golden/death cross detection)
+    if (ma50 && Math.abs((ma20 - ma50) / ma50 * 100) < 0.3) {
+      const crossType = ma20 > ma50 ? '金叉形成中' : '死叉形成中';
+      const crossIcon = ma20 > ma50 ? '🔴' : '🟢';
+      alerts.push({ level: crossIcon, text: `20MA / 50MA ${crossType}`, detail: 'CTA 趋势跟踪系统核心信号！' });
+    }
+
+    if (alerts.length > 0) {
+      alerts.forEach(a => {
+        html += `
+          <div style="display:flex;gap:10px;align-items:flex-start;padding:10px 14px;background:var(--card2);border-radius:8px;">
+            <span style="font-size:18px;">${a.level}</span>
+            <div>
+              <div style="font-size:13px;font-weight:600;">${name}: ${a.text}</div>
+              <div style="font-size:11px;color:var(--dim);">${a.detail}</div>
+            </div>
+          </div>
+        `;
+      });
+    }
+  });
+
+  if (html === '') {
+    html = `
+      <div style="padding:14px;background:var(--card2);border-radius:8px;text-align:center;color:var(--dim);font-size:13px;">
+        ✅ 当前无关键均线触发警报 — 各品种价格均远离 20/50 均线交叉点
+      </div>
+    `;
+  }
+
+  container.innerHTML = html;
+}
+
+// --- Multi-contract COT trend chart ---
+const COT_COLORS = {
+  '13874A': '#3b82f6',  // S&P 500 - blue
+  '209742': '#a855f7',  // Nasdaq - purple
+  '020601': '#06b6d4',  // Treasury - cyan
+  '088691': '#f59e0b',  // Gold - amber
+  '067651': '#ef4444',  // Oil - red
+};
+
+function renderCOTMultiChart() {
+  const canvas = document.getElementById('cotMultiChart');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.parentElement.getBoundingClientRect();
+
+  canvas.width = rect.width * dpr;
+  canvas.height = 300 * dpr;
+  canvas.style.width = rect.width + 'px';
+  canvas.style.height = '300px';
+  ctx.scale(dpr, dpr);
+
+  const W = rect.width;
+  const H = 300;
+  const pad = { top: 24, right: 80, bottom: 36, left: 70 };
+  const cw = W - pad.left - pad.right;
+  const ch = H - pad.top - pad.bottom;
+
+  ctx.clearRect(0, 0, W, H);
+
+  const processed = cotData.processed;
+  if (!processed || Object.keys(processed).length === 0) {
+    ctx.fillStyle = '#6b7194';
+    ctx.font = '14px -apple-system, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('等待 COT 数据加载...', W / 2, H / 2);
+    return;
+  }
+
+  // Collect all series
+  const series = [];
+  let maxLen = 0;
+  let allDates = [];
+
+  for (const [code, info] of Object.entries(processed)) {
+    if (!info.history || info.history.length < 2) continue;
+    series.push({ code, name: info.displayName, history: info.history, color: COT_COLORS[code] || '#6b7194' });
+    if (info.history.length > maxLen) {
+      maxLen = info.history.length;
+      allDates = info.history.map(h => h.date);
+    }
+  }
+
+  if (series.length === 0) return;
+
+  // Normalize each series using min-max scaling
+  // This ensures the Y-axis direction matches the single-asset chart:
+  // - Higher values (closer to 0 or more positive) appear higher on the chart
+  // - Lower values (more negative) appear lower
+  series.forEach(s => {
+    const values = s.history.map(h => h.net);
+    const minV = Math.min(...values);
+    const maxV = Math.max(...values);
+    const range = maxV - minV || 1;
+    // Map to [0, 1] where 0 = minV (bottom), 1 = maxV (top)
+    s.normalized = values.map(v => (v - minV) / range);
+    s.minV = minV;
+    s.maxV = maxV;
+  });
+
+  const xScale = (i) => pad.left + (i / (maxLen - 1)) * cw;
+  // Y scale: 0 at bottom, 1 at top
+  const yScale = (v) => pad.top + ch - v * ch;
+
+  // Grid - horizontal lines at 0%, 25%, 50%, 75%, 100%
+  ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+  ctx.lineWidth = 1;
+  for (let i = 0; i <= 4; i++) {
+    const y = yScale(i / 4);
+    ctx.beginPath();
+    ctx.moveTo(pad.left, y);
+    ctx.lineTo(W - pad.right, y);
+    ctx.stroke();
+  }
+
+  // Y labels - show relative position
+  ctx.fillStyle = '#6b7194';
+  ctx.font = '10px -apple-system, sans-serif';
+  ctx.textAlign = 'right';
+  ctx.fillText('高位', pad.left - 8, yScale(1) + 4);
+  ctx.fillText('中位', pad.left - 8, yScale(0.5) + 4);
+  ctx.fillText('低位', pad.left - 8, yScale(0) + 4);
+
+  // Date labels
+  allDates.forEach((d, i) => {
+    if (i % 2 === 0 || i === allDates.length - 1) {
+      ctx.fillStyle = '#6b7194';
+      ctx.font = '9px -apple-system, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(d ? d.slice(5) : '', xScale(i), H - 8);
+    }
+  });
+
+  // Draw each series line first
+  series.forEach(s => {
+    const norm = s.normalized;
+    ctx.beginPath();
+    norm.forEach((v, i) => {
+      const x = xScale(i);
+      const y = yScale(v);
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    });
+    ctx.strokeStyle = s.color;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  });
+
+  // Collect end points for label de-overlap
+  const endPoints = series.map(s => {
+    const lastIdx = s.normalized.length - 1;
+    const rawLast = s.history[lastIdx].net;
+    const label = rawLast >= 1000 ? '+' + (rawLast/1000).toFixed(0) + 'K' :
+                  rawLast <= -1000 ? (rawLast/1000).toFixed(0) + 'K' : rawLast.toFixed(0);
+    return {
+      series: s,
+      lx: xScale(lastIdx),
+      ly: yScale(s.normalized[lastIdx]),
+      label,
+    };
+  });
+
+  // Sort by Y position and de-overlap labels (min 14px apart)
+  endPoints.sort((a, b) => a.ly - b.ly);
+  const minGap = 14;
+  for (let i = 1; i < endPoints.length; i++) {
+    const prev = endPoints[i - 1];
+    const curr = endPoints[i];
+    if (curr.ly - prev.ly < minGap) {
+      curr.ly = prev.ly + minGap;
+    }
+  }
+
+  // Draw end dots + labels
+  endPoints.forEach(ep => {
+    const s = ep.series;
+    // Dot at actual position
+    const actualLy = yScale(s.normalized[s.normalized.length - 1]);
+    ctx.beginPath();
+    ctx.arc(ep.lx, actualLy, 4, 0, Math.PI * 2);
+    ctx.fillStyle = s.color;
+    ctx.fill();
+
+    // Label at de-overlapped position
+    ctx.fillStyle = s.color;
+    ctx.font = 'bold 10px -apple-system, sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText(ep.label, ep.lx + 6, ep.ly + 4);
+  });
+
+  // Legend
+  const legendEl = document.getElementById('cotMultiLegend');
+  if (legendEl) {
+    legendEl.innerHTML = series.map(s => {
+      const lastNet = s.history[s.history.length - 1].net;
+      const netStr = lastNet >= 1000 ? '+' + (lastNet/1000).toFixed(0) + 'K' :
+                     lastNet <= -1000 ? (lastNet/1000).toFixed(0) + 'K' : lastNet.toFixed(0);
+      return `<span style="display:flex;align-items:center;gap:4px;font-size:12px;color:var(--dim);">
+        <span style="width:12px;height:3px;border-radius:2px;background:${s.color};display:inline-block;"></span>
+        ${s.name} <span style="color:${s.color};font-weight:600;">${netStr}</span>
+      </span>`;
+    }).join('');
+  }
+}
+
+// --- Multi-asset price trend chart ---
+function renderPriceTrendChart() {
+  const canvas = document.getElementById('priceTrendChart');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.parentElement.getBoundingClientRect();
+
+  canvas.width = rect.width * dpr;
+  canvas.height = 300 * dpr;
+  canvas.style.width = rect.width + 'px';
+  canvas.style.height = '300px';
+  ctx.scale(dpr, dpr);
+
+  const W = rect.width;
+  const H = 300;
+  const pad = { top: 24, right: 60, bottom: 36, left: 60 };
+  const cw = W - pad.left - pad.right;
+  const ch = H - pad.top - pad.bottom;
+
+  ctx.clearRect(0, 0, W, H);
+
+  // We need kline data — fetch for each asset from proxy
+  // For now, compute from COT history dates + current price vs prevClose
+  // If kline data cached, use it; otherwise show placeholder
+  if (!window._priceTrendData || Object.keys(window._priceTrendData).length === 0) {
+    ctx.fillStyle = '#6b7194';
+    ctx.font = '14px -apple-system, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('正在获取价格趋势数据...', W / 2, H / 2);
+    fetchPriceTrends().then(() => renderPriceTrendChart());
+    return;
+  }
+
+  const trendData = window._priceTrendData;
+  const assetColors = {
+    'spx': '#3b82f6',
+    'es': '#a855f7',
+    'gold': '#f59e0b',
+    'oil': '#ef4444',
+    'copper': '#06b6d4',
+    'usdjpy': '#22c55e',
+  };
+  const assetNames = {
+    'spx': 'S&P 500',
+    'es': 'ES 期货',
+    'gold': '黄金',
+    'oil': '原油',
+    'copper': '铜',
+    'usdjpy': 'USD/JPY',
+  };
+
+  // Find max data length
+  let maxLen = 0;
+  let dateLabels = [];
+  const seriesList = [];
+
+  for (const [id, data] of Object.entries(trendData)) {
+    if (!data || data.length < 2) continue;
+    const basePrice = data[0].close;
+    const normalized = data.map(d => ((d.close - basePrice) / basePrice) * 100);
+    seriesList.push({ id, normalized, dates: data.map(d => d.date) });
+    if (data.length > maxLen) {
+      maxLen = data.length;
+      dateLabels = data.map(d => d.date);
+    }
+  }
+
+  if (seriesList.length === 0) {
+    ctx.fillStyle = '#6b7194';
+    ctx.font = '14px -apple-system, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('价格数据不足', W / 2, H / 2);
+    return;
+  }
+
+  // --- Detect outliers: separate "normal" vs "extreme" series ---
+  // An extreme series has |lastValue| > 3x the median |lastValue| of all series
+  const lastValues = seriesList.map(s => Math.abs(s.normalized[s.normalized.length - 1]));
+  const sortedLast = [...lastValues].sort((a, b) => a - b);
+  const medianAbs = sortedLast[Math.floor(sortedLast.length / 2)] || 1;
+  const outlierThreshold = Math.max(medianAbs * 3, 15); // at least 15% diff to be "extreme"
+
+  const normalSeries = [];
+  const extremeSeries = [];
+  seriesList.forEach(s => {
+    const maxAbsVal = Math.max(...s.normalized.map(v => Math.abs(v)));
+    if (maxAbsVal > outlierThreshold && seriesList.length > 2) {
+      extremeSeries.push(s);
+    } else {
+      normalSeries.push(s);
+    }
+  });
+
+  const hasExtreme = extremeSeries.length > 0 && normalSeries.length > 0;
+  const primarySeries = hasExtreme ? normalSeries : seriesList;
+  const secondarySeries = hasExtreme ? extremeSeries : [];
+
+  // --- Primary Y axis (left) ---
+  let minY = 0, maxY = 0;
+  primarySeries.forEach(s => {
+    s.normalized.forEach(v => {
+      if (v < minY) minY = v;
+      if (v > maxY) maxY = v;
+    });
+  });
+  const yPad = Math.max((maxY - minY) * 0.15, 2);
+  minY -= yPad;
+  maxY += yPad;
+
+  // --- Secondary Y axis (right) for extreme series ---
+  let minY2 = 0, maxY2 = 0;
+  if (hasExtreme) {
+    secondarySeries.forEach(s => {
+      s.normalized.forEach(v => {
+        if (v < minY2) minY2 = v;
+        if (v > maxY2) maxY2 = v;
+      });
+    });
+    const yPad2 = Math.max((maxY2 - minY2) * 0.15, 2);
+    minY2 -= yPad2;
+    maxY2 += yPad2;
+  }
+
+  const xScale = (i) => pad.left + (i / (maxLen - 1)) * cw;
+  const yScale = (v) => pad.top + ch - ((v - minY) / (maxY - minY)) * ch;
+  const yScale2 = (v) => pad.top + ch - ((v - minY2) / (maxY2 - minY2)) * ch;
+
+  // Grid (based on primary Y)
+  ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+  ctx.lineWidth = 1;
+  const gridSteps = 6;
+  for (let i = 0; i <= gridSteps; i++) {
+    const v = minY + (maxY - minY) * (i / gridSteps);
+    const y = yScale(v);
+    ctx.beginPath();
+    ctx.moveTo(pad.left, y);
+    ctx.lineTo(W - pad.right, y);
+    ctx.stroke();
+
+    // Left Y labels
+    ctx.fillStyle = '#6b7194';
+    ctx.font = '10px -apple-system, sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillText((v >= 0 ? '+' : '') + v.toFixed(1) + '%', pad.left - 6, y + 4);
+  }
+
+  // Right Y labels for extreme series
+  if (hasExtreme) {
+    for (let i = 0; i <= gridSteps; i++) {
+      const v2 = minY2 + (maxY2 - minY2) * (i / gridSteps);
+      const y = yScale2(v2);
+      ctx.fillStyle = secondarySeries[0] ? (assetColors[secondarySeries[0].id] || '#ef4444') : '#ef4444';
+      ctx.font = '10px -apple-system, sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillText((v2 >= 0 ? '+' : '') + v2.toFixed(0) + '%', W - pad.right + 6, y + 4);
+    }
+    // Right axis indicator
+    ctx.fillStyle = 'rgba(255,255,255,0.15)';
+    ctx.font = '9px -apple-system, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.save();
+    ctx.translate(W - 6, pad.top + ch / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.fillText('▲ 右轴', 0, 0);
+    ctx.restore();
+  }
+
+  // Zero line
+  const zeroY = yScale(0);
+  ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+  ctx.setLineDash([4, 4]);
+  ctx.beginPath();
+  ctx.moveTo(pad.left, zeroY);
+  ctx.lineTo(W - pad.right, zeroY);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Date labels
+  dateLabels.forEach((d, i) => {
+    if (maxLen <= 20 || i % Math.ceil(maxLen / 10) === 0 || i === dateLabels.length - 1) {
+      ctx.fillStyle = '#6b7194';
+      ctx.font = '9px -apple-system, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(d ? d.slice(5) : '', xScale(i), H - 8);
+    }
+  });
+
+  // Helper: draw a series
+  function drawSeries(s, scaleFn, isDashed) {
+    ctx.beginPath();
+    s.normalized.forEach((v, i) => {
+      const x = xScale(i);
+      const y = scaleFn(v);
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    });
+    ctx.strokeStyle = assetColors[s.id] || '#6b7194';
+    ctx.lineWidth = isDashed ? 2.5 : 2;
+    if (isDashed) ctx.setLineDash([6, 3]);
+    ctx.stroke();
+    if (isDashed) ctx.setLineDash([]);
+
+    // End dot + label
+    const lastIdx = s.normalized.length - 1;
+    const lastV = s.normalized[lastIdx];
+    const lx = xScale(lastIdx);
+    const ly = scaleFn(lastV);
+    ctx.beginPath();
+    ctx.arc(lx, ly, 3.5, 0, Math.PI * 2);
+    ctx.fillStyle = assetColors[s.id] || '#6b7194';
+    ctx.fill();
+
+    ctx.font = 'bold 10px -apple-system, sans-serif';
+    ctx.textAlign = 'left';
+    const labelStr = (lastV >= 0 ? '+' : '') + lastV.toFixed(1) + '%';
+    ctx.fillText(labelStr, lx + 6, ly + 4);
+  }
+
+  // Draw primary series (left Y)
+  primarySeries.forEach(s => drawSeries(s, yScale, false));
+
+  // Draw extreme series (right Y, dashed line)
+  secondarySeries.forEach(s => drawSeries(s, yScale2, true));
+
+  // Legend
+  const legendEl = document.getElementById('priceTrendLegend');
+  if (legendEl) {
+    legendEl.innerHTML = seriesList.map(s => {
+      const lastV = s.normalized[s.normalized.length - 1];
+      const pctStr = (lastV >= 0 ? '+' : '') + lastV.toFixed(1) + '%';
+      const color = assetColors[s.id] || '#6b7194';
+      const isExtreme = secondarySeries.includes(s);
+      const tag = isExtreme ? ' <span style="font-size:10px;opacity:0.6;">(右轴)</span>' : '';
+      const lineStyle = isExtreme ? 'border-top:2px dashed ' + color : 'background:' + color;
+      return `<span style="display:flex;align-items:center;gap:4px;font-size:12px;color:var(--dim);">
+        <span style="width:12px;height:${isExtreme ? '0' : '3px'};border-radius:2px;${lineStyle};display:inline-block;"></span>
+        ${assetNames[s.id] || s.id}${tag} <span style="color:${color};font-weight:600;">${pctStr}</span>
+      </span>`;
+    }).join('');
+  }
+}
+
+// Fetch price trend klines for all assets
+async function fetchPriceTrends() {
+  if (!proxyOnline) return;
+
+  window._priceTrendData = {};
+
+  const symbolMap = {
+    'spx': '^GSPC',
+    'es': 'ES=F',
+    'gold': 'GC=F',
+    'oil': 'CL=F',
+    'copper': 'HG=F',
+    'usdjpy': 'JPY=X',
+  };
+
+  const fetches = Object.entries(symbolMap).map(async ([id, symbol]) => {
+    try {
+      const resp = await fetch(`${PROXY_BASE}/api/klines?symbol=${encodeURIComponent(symbol)}&num=30`, { signal: AbortSignal.timeout(10000) });
+      const json = await resp.json();
+      if (json.ok && json.data && json.data.length > 0) {
+        window._priceTrendData[id] = json.data;
+      }
+    } catch(e) {
+      console.warn(`Kline fetch failed for ${id}:`, e);
+    }
+  });
+
+  await Promise.allSettled(fetches);
+}
+
+// --- Main refresh ---
+async function refreshAllCTA() {
+  // Show loading state
+  document.getElementById('spxPrice').textContent = '...';
+  document.getElementById('esPrice').textContent = '...';
+
+  try {
+    // Check proxy first
+    await checkProxy();
+
+    if (!proxyOnline) {
+      document.getElementById('lastUpdate').innerHTML =
+        '⚠️ 代理服务未启动 — 请运行 <code style="background:rgba(255,255,255,0.1);padding:2px 6px;border-radius:3px;">python3 cta-proxy.py</code>';
+      // Still try to get COT (will fallback to simulated)
+      await fetchCOTData();
+      renderCOTTable();
+      renderCOTChart();
+      renderCOTMultiChart();
+      renderPositionSummary();
+      return;
+    }
+
+    // Fetch all data in parallel
+    await Promise.allSettled([
+      fetchAllAssets(),
+      fetchCOTData(),
+    ]);
+
+    // Render everything
+    renderLiveQuotes();
+    renderSignalMatrix();
+    renderCOTTable();
+    renderCOTChart();
+    renderCOTMultiChart();
+    renderPriceTrendChart();
+    renderPositionSummary();
+    renderMAAlerts();
+
+  } catch(e) {
+    console.error('CTA Monitor refresh failed:', e);
+  }
+}
+
+// Auto-refresh on load
+refreshAllCTA();
+
+// Auto-refresh every 5 minutes during market hours
+setInterval(() => {
+  const now = new Date();
+  const hour = now.getUTCHours();
+  // US market hours roughly 14:30-21:00 UTC
+  if (hour >= 13 && hour <= 22) {
+    refreshAllCTA();
+  }
+}, 5 * 60 * 1000);
+
+// ============ TAB SWITCHING ============
+function switchTab(tabId) {
+  // Update tab buttons
+  document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+  document.querySelector(`.tab-btn[onclick="switchTab('${tabId}')"]`).classList.add('active');
+  
+  // Update tab content
+  document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+  document.getElementById('tab-' + tabId).classList.add('active');
+  
+  // Re-render charts when switching to their tab (canvas needs visible container)
+  if (tabId === 'cta') {
+    setTimeout(() => {
+      renderCOTChart();
+      renderCOTMultiChart();
+      renderPriceTrendChart();
+    }, 50);
+  } else if (tabId === 'spx') {
+    setTimeout(() => {
+      drawChart();
+    }, 50);
+  }
+}
+
+// ============ DOM REORGANIZATION ON LOAD ============
+document.addEventListener('DOMContentLoaded', () => {
+  // Move predict-section-content to tab-predict (at the end)
+  const tabPredict = document.getElementById('tab-predict');
+  document.querySelectorAll('.predict-section-content').forEach(el => {
+    tabPredict.appendChild(el);
+  });
+  
+  // Move SPX chart section to tab-spx
+  const tabSpx = document.getElementById('tab-spx');
+  const spxChartSection = document.querySelector('#spxChart')?.closest('.chart-section');
+  if (tabSpx && spxChartSection) {
+    // Clear placeholder
+    tabSpx.innerHTML = '';
+    tabSpx.appendChild(spxChartSection);
+  }
+  
+  // Initial render
+  drawChart();
+  refreshAllCTA();
+});
+</script>
+</body>
+</html>

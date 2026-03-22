@@ -1,0 +1,1095 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TEACT 分析框架 Checklist</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --card: #1a1d29;
+    --card-hover: #222638;
+    --border: #2a2e3e;
+    --text: #e4e6f0;
+    --text-dim: #8b8fa3;
+    --accent-t: #3b82f6;
+    --accent-e: #f59e0b;
+    --accent-a: #a855f7;
+    --accent-c: #10b981;
+    --accent-tech: #ef4444;
+    --check-bg: #22c55e;
+    --warn: #f59e0b;
+    --danger: #ef4444;
+    --bullish: #ef4444;
+    --bearish: #22c55e;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'SF Pro Display', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 24px 20px;
+  }
+
+  /* Header */
+  .header {
+    text-align: center;
+    padding: 32px 0 24px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 24px;
+  }
+
+  .header h1 {
+    font-size: 28px;
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--accent-t), var(--accent-a));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 8px;
+  }
+
+  .header p {
+    color: var(--text-dim);
+    font-size: 14px;
+  }
+
+  /* Meta bar */
+  .meta-bar {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 24px;
+  }
+
+  .meta-bar input, .meta-bar select {
+    background: var(--card);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .meta-bar input:focus, .meta-bar select:focus {
+    border-color: var(--accent-t);
+  }
+
+  .meta-bar input { flex: 1; min-width: 160px; }
+  .meta-bar select { min-width: 140px; }
+
+  /* Progress */
+  .progress-section {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 24px;
+  }
+
+  .progress-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+
+  .progress-header h3 { font-size: 16px; font-weight: 600; }
+
+  .progress-pct {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--accent-t);
+  }
+
+  .progress-bar-bg {
+    height: 8px;
+    background: var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 12px;
+  }
+
+  .progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent-t), var(--accent-a));
+    border-radius: 4px;
+    transition: width 0.4s ease;
+    width: 0%;
+  }
+
+  .progress-dims {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .dim-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border);
+  }
+
+  .dim-badge .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+  }
+
+  /* Confluence Score */
+  .confluence-section {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 24px;
+    text-align: center;
+  }
+
+  .confluence-title { font-size: 14px; color: var(--text-dim); margin-bottom: 8px; }
+
+  .confluence-score {
+    font-size: 48px;
+    font-weight: 800;
+    transition: color 0.3s;
+  }
+
+  .confluence-label {
+    font-size: 14px;
+    margin-top: 4px;
+    font-weight: 600;
+  }
+
+  .confluence-meter {
+    display: flex;
+    gap: 4px;
+    justify-content: center;
+    margin-top: 12px;
+  }
+
+  .confluence-meter .seg {
+    width: 40px;
+    height: 6px;
+    border-radius: 3px;
+    background: var(--border);
+    transition: background 0.3s;
+  }
+
+  /* Dimension sections */
+  .dimension {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin-bottom: 16px;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+
+  .dimension:hover { border-color: rgba(255,255,255,0.1); }
+
+  .dim-header {
+    display: flex;
+    align-items: center;
+    padding: 16px 20px;
+    cursor: pointer;
+    user-select: none;
+    gap: 12px;
+  }
+
+  .dim-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    font-weight: 700;
+    flex-shrink: 0;
+    color: #fff;
+  }
+
+  .dim-info { flex: 1; }
+  .dim-info h3 { font-size: 16px; font-weight: 600; }
+  .dim-info p { font-size: 12px; color: var(--text-dim); }
+
+  .dim-counter {
+    font-size: 13px;
+    color: var(--text-dim);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .dim-arrow {
+    color: var(--text-dim);
+    transition: transform 0.2s;
+    font-size: 14px;
+  }
+
+  .dimension.open .dim-arrow { transform: rotate(180deg); }
+
+  .dim-body {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.35s ease;
+  }
+
+  .dimension.open .dim-body { max-height: 2000px; }
+
+  .dim-content { padding: 0 20px 20px; }
+
+  /* Checklist items */
+  .check-group { margin-bottom: 16px; }
+
+  .check-group-title {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-dim);
+    margin-bottom: 8px;
+    padding-left: 4px;
+  }
+
+  .check-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.15s;
+    user-select: none;
+  }
+
+  .check-item:hover { background: rgba(255,255,255,0.03); }
+
+  .check-box {
+    width: 20px;
+    height: 20px;
+    border-radius: 5px;
+    border: 2px solid var(--border);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 1px;
+    transition: all 0.2s;
+  }
+
+  .check-item.checked .check-box {
+    background: var(--check-bg);
+    border-color: var(--check-bg);
+  }
+
+  .check-box svg {
+    width: 12px;
+    height: 12px;
+    fill: none;
+    stroke: #fff;
+    stroke-width: 2.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
+  .check-item.checked .check-box svg { opacity: 1; }
+
+  .check-label { flex: 1; }
+
+  .check-label .main {
+    font-size: 14px;
+    transition: color 0.2s;
+  }
+
+  .check-item.checked .check-label .main {
+    color: var(--text-dim);
+    text-decoration: line-through;
+  }
+
+  .check-label .hint {
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-top: 2px;
+  }
+
+  /* Signal selector */
+  .signal-sel {
+    display: inline-flex;
+    gap: 4px;
+    margin-left: 8px;
+    vertical-align: middle;
+  }
+
+  .signal-btn {
+    padding: 2px 8px;
+    font-size: 11px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-dim);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .signal-btn.bullish.active { background: rgba(239,68,68,0.2); border-color: var(--bullish); color: var(--bullish); }
+  .signal-btn.bearish.active { background: rgba(34,197,94,0.2); border-color: var(--bearish); color: var(--bearish); }
+  .signal-btn.neutral.active { background: rgba(255,255,255,0.08); border-color: var(--text-dim); color: var(--text); }
+
+  /* Notes */
+  .notes-area {
+    width: 100%;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    padding: 10px 12px;
+    font-size: 13px;
+    font-family: inherit;
+    resize: vertical;
+    min-height: 60px;
+    outline: none;
+    margin-top: 8px;
+  }
+
+  .notes-area:focus { border-color: var(--accent-t); }
+
+  .notes-area::placeholder { color: var(--text-dim); }
+
+  /* Verdict / Summary */
+  .verdict-section {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    margin-top: 24px;
+  }
+
+  .verdict-section h3 { font-size: 18px; margin-bottom: 16px; }
+
+  .verdict-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .verdict-card {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px;
+  }
+
+  .verdict-card label {
+    display: block;
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-bottom: 4px;
+  }
+
+  .verdict-card input, .verdict-card select {
+    width: 100%;
+    background: transparent;
+    border: none;
+    color: var(--text);
+    font-size: 16px;
+    font-weight: 600;
+    outline: none;
+  }
+
+  /* Buttons */
+  .actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 20px;
+    flex-wrap: wrap;
+  }
+
+  .btn {
+    padding: 10px 20px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--text);
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .btn:hover { background: var(--card-hover); border-color: rgba(255,255,255,0.15); }
+
+  .btn-primary {
+    background: var(--accent-t);
+    border-color: var(--accent-t);
+    color: #fff;
+  }
+
+  .btn-primary:hover { background: #2563eb; }
+
+  .btn-danger { border-color: var(--danger); color: var(--danger); }
+  .btn-danger:hover { background: rgba(239,68,68,0.1); }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--card);
+    border: 1px solid var(--border);
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    opacity: 0;
+    transition: all 0.3s ease;
+    z-index: 100;
+    pointer-events: none;
+  }
+
+  .toast.show {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+  }
+
+  /* Responsive */
+  @media (max-width: 640px) {
+    .container { padding: 16px 12px; }
+    .header h1 { font-size: 22px; }
+    .confluence-score { font-size: 36px; }
+    .verdict-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- Header -->
+  <div class="header">
+    <h1>TEACT 分析框架 Checklist</h1>
+    <p>Trend · EWT · Astro · Cycle · Tech — 五维共振分析工具</p>
+  </div>
+
+  <!-- Meta bar -->
+  <div class="meta-bar">
+    <input type="text" id="metaTicker" placeholder="标的 (如 SPX, NDX, BTC)" value="SPX">
+    <input type="date" id="metaDate">
+    <select id="metaTf">
+      <option value="日线">日线</option>
+      <option value="周线">周线</option>
+      <option value="月线">月线</option>
+      <option value="2H">2H</option>
+      <option value="30min">30min</option>
+    </select>
+  </div>
+
+  <!-- Progress -->
+  <div class="progress-section">
+    <div class="progress-header">
+      <h3>分析进度</h3>
+      <span class="progress-pct" id="progressPct">0%</span>
+    </div>
+    <div class="progress-bar-bg">
+      <div class="progress-bar-fill" id="progressBar"></div>
+    </div>
+    <div class="progress-dims" id="dimBadges"></div>
+  </div>
+
+  <!-- Confluence -->
+  <div class="confluence-section">
+    <div class="confluence-title">五维共振指数</div>
+    <div class="confluence-score" id="confScore">0 / 5</div>
+    <div class="confluence-label" id="confLabel" style="color: var(--text-dim);">尚未分析</div>
+    <div class="confluence-meter" id="confMeter"></div>
+  </div>
+
+  <!-- Dimensions -->
+  <div id="dimensionsContainer"></div>
+
+  <!-- Verdict -->
+  <div class="verdict-section">
+    <h3>📝 综合研判</h3>
+    <div class="verdict-grid">
+      <div class="verdict-card">
+        <label>方向判断</label>
+        <select id="verdictDir">
+          <option value="">-- 选择 --</option>
+          <option value="强看涨">🔴 强看涨</option>
+          <option value="温和看涨">🟠 温和看涨</option>
+          <option value="中性">⚪ 中性</option>
+          <option value="温和看跌">🟢 温和看跌</option>
+          <option value="强看跌">🟢 强看跌</option>
+        </select>
+      </div>
+      <div class="verdict-card">
+        <label>目标点位</label>
+        <input type="text" id="verdictTarget" placeholder="如 6800-6900">
+      </div>
+      <div class="verdict-card">
+        <label>止损点位</label>
+        <input type="text" id="verdictStop" placeholder="如 6400">
+      </div>
+      <div class="verdict-card">
+        <label>时间窗口</label>
+        <input type="text" id="verdictTime" placeholder="如 3月底前">
+      </div>
+      <div class="verdict-card">
+        <label>置信度</label>
+        <select id="verdictConf">
+          <option value="">-- 选择 --</option>
+          <option value="90%+">90%+ (极高，五维共振)</option>
+          <option value="70-90%">70-90% (高，多维确认)</option>
+          <option value="50-70%">50-70% (中等，部分确认)</option>
+          <option value="<50%">＜50% (低，信号矛盾)</option>
+        </select>
+      </div>
+      <div class="verdict-card">
+        <label>仓位建议</label>
+        <input type="text" id="verdictPos" placeholder="如 60%多/40%空">
+      </div>
+    </div>
+    <textarea class="notes-area" id="verdictNotes" rows="3" placeholder="综合分析笔记...&#10;&#10;例：EWT 确认 W[5] 启动 + 水逆结束确认时间窗口 + RSI 重置到位 → 高置信度做多"></textarea>
+
+    <div class="actions">
+      <button class="btn btn-primary" onclick="exportReport()">📋 导出报告</button>
+      <button class="btn" onclick="saveLocal()">💾 保存本地</button>
+      <button class="btn" onclick="loadLocal()">📂 加载存档</button>
+      <button class="btn btn-danger" onclick="resetAll()">🗑 重置</button>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ============ DATA ============
+const DIMS = [
+  {
+    key: 'trend',
+    letter: 'T',
+    name: 'Trend — 趋势分析',
+    desc: '定大方向：多时间框架 + 大级别形态',
+    color: 'var(--accent-t)',
+    groups: [
+      {
+        title: '多时间框架确认',
+        items: [
+          { id: 't1', text: '月线趋势方向', hint: '牛市 / 熊市 / 震荡' },
+          { id: 't2', text: '周线趋势方向', hint: '与月线是否一致？' },
+          { id: 't3', text: '日线趋势方向', hint: '短期动能' },
+          { id: 't4', text: '2H / 4H 级别趋势', hint: '中短期摆动' },
+        ]
+      },
+      {
+        title: '大级别形态',
+        items: [
+          { id: 't5', text: '超级穹顶 (Super Dome) 是否存在？', hint: '数月震荡区间的对称顶部' },
+          { id: 't6', text: '超长期趋势线位置', hint: '追溯至 1930 年的棕色趋势线' },
+          { id: 't7', text: '多趋势线交汇点', hint: '不同周期趋势线交叉 = 高概率转折' },
+        ]
+      },
+      {
+        title: '市场广度',
+        items: [
+          { id: 't8', text: 'SPX Color Map 热力图', hint: 'MAG-7 vs 其余分化程度' },
+          { id: 't9', text: '多数股票方向', hint: '广度确认 or 背离？' },
+        ]
+      }
+    ]
+  },
+  {
+    key: 'ewt',
+    letter: 'E',
+    name: 'EWT — 艾略特波浪 ⭐',
+    desc: '核心骨架：波浪计数定位 + 多路径概率',
+    color: 'var(--accent-e)',
+    groups: [
+      {
+        title: '大级别浪位',
+        items: [
+          { id: 'e1', text: '当前大级别浪位', hint: '如 W-5 中的 W[4]，标注完整路径' },
+          { id: 'e2', text: '当前子浪位', hint: '如 W[E] of expanding triangle' },
+          { id: 'e3', text: '波浪约束条件检查', hint: '如 W[E] < W[C]? 2浪不超过1浪起点?' },
+        ]
+      },
+      {
+        title: '多路径追踪（颜色系统）',
+        items: [
+          { id: 'e4', text: '🔵 蓝色路径（主路径）', hint: '描述 + 概率 %' },
+          { id: 'e5', text: '🟢 绿色路径（备选 1）', hint: '描述 + 概率 %' },
+          { id: 'e6', text: '🟣 紫色路径（备选 2）', hint: '描述 + 概率 %' },
+        ]
+      },
+      {
+        title: '结构确认',
+        items: [
+          { id: 'e7', text: '推动浪 vs 修正浪确认', hint: '当前是 5 浪推动还是 3 浪修正？' },
+          { id: 'e8', text: '是否存在延伸浪？', hint: '第 3 浪延伸最常见' },
+          { id: 'e9', text: '当前计数是否需要调整？', hint: '市场走势是否否定了当前主计数？' },
+        ]
+      }
+    ]
+  },
+  {
+    key: 'astro',
+    letter: 'A',
+    name: 'Astro — 金融占星',
+    desc: '时间锚定：天文周期定位变盘日期',
+    color: 'var(--accent-a)',
+    groups: [
+      {
+        title: '水星逆行（核心）',
+        items: [
+          { id: 'a1', text: '当前是否处于水星逆行期？', hint: '逆行期 = 市场混乱加剧' },
+          { id: 'a2', text: '水逆起点/中点/结束日期', hint: '起点=回调起点，中点=反转，结束=底部' },
+          { id: 'a3', text: '水逆三段式当前所处阶段', hint: '据此判断是假底还是真底' },
+        ]
+      },
+      {
+        title: '日月食与满月',
+        items: [
+          { id: 'a4', text: '近期是否有月食 / 血月？', hint: '崩盘触发器 / 大级别情绪转折' },
+          { id: 'a5', text: '近期是否有日食？', hint: '短期低点标记' },
+          { id: 'a6', text: '满月日期', hint: '市场转折点概率升高' },
+        ]
+      },
+      {
+        title: '行星事件',
+        items: [
+          { id: 'a7', text: '金星-土星-海王星合相？', hint: '剧烈洗盘的前兆' },
+          { id: 'a8', text: '木星顺行/逆行状态', hint: '顺行 = 新叙事启动' },
+          { id: 'a9', text: '普埃茨崩盘窗口', hint: '基于日月食的高概率崩盘时间段' },
+        ]
+      }
+    ]
+  },
+  {
+    key: 'cycle',
+    letter: 'C',
+    name: 'Cycle — 周期分析',
+    desc: '时间验证：RSI背离 + VIX + 市场宽度',
+    color: 'var(--accent-c)',
+    groups: [
+      {
+        title: 'RSI 多级别背离（终极裁判）',
+        items: [
+          { id: 'c1', text: '日线 RSI 背离状态', hint: '是否形成看涨/看跌背离？' },
+          { id: 'c2', text: '周线 RSI 背离状态', hint: '是否已重置到位？' },
+          { id: 'c3', text: '月线 RSI 背离状态', hint: '月线背离 = 大顶/大底的终极确认' },
+        ]
+      },
+      {
+        title: 'VIX 周期',
+        items: [
+          { id: 'c4', text: 'VIX 当前绝对值', hint: '＞30 = 恐慌，＜15 = 自满' },
+          { id: 'c5', text: 'VIX 与 SPX 是否背离？', hint: 'SPX 新低 + VIX 未新高 = 底部信号' },
+          { id: 'c6', text: 'VIX 是否有缺口未回补？', hint: 'VIX 缺口有引力效应' },
+        ]
+      },
+      {
+        title: '市场宽度',
+        items: [
+          { id: 'c7', text: '$MMTW 当前值', hint: '＜15 极端超卖 | 15-20 接近底部 | ＞25 底部未成熟' },
+          { id: 'c8', text: '$NYMO McClellan 振荡', hint: '跌破布林带 = 闪崩 + V型复苏预兆' },
+          { id: 'c9', text: '兴登堡凶兆触发次数', hint: '1月内 ≥5 次 = 顶部预警' },
+        ]
+      },
+      {
+        title: '事件周期',
+        items: [
+          { id: 'c10', text: 'FOMC 会议窗口', hint: '会后第二天 = 真实意图显露' },
+          { id: 'c11', text: 'OpEx（期权到期日）', hint: '期权到期前后波动率放大' },
+          { id: 'c12', text: '死叉信号 (20MA / 50MA)', hint: '20日均线下穿50日 = 中期趋势转弱' },
+        ]
+      }
+    ]
+  },
+  {
+    key: 'tech',
+    letter: 'T',
+    name: 'Tech — 技术指标',
+    desc: '执行层：精确计算目标点位和概率',
+    color: 'var(--accent-tech)',
+    groups: [
+      {
+        title: '斐波那契',
+        items: [
+          { id: 'k1', text: '关键斐波那契回撤位', hint: '38.2% / 50% / 61.8% / 78.6%' },
+          { id: 'k2', text: '斐波那契扩展目标', hint: '1.0 / 1.272 / 1.618 倍扩展' },
+        ]
+      },
+      {
+        title: '均线与支撑阻力',
+        items: [
+          { id: 'k3', text: 'SMA 200 位置', hint: '大级别动态支撑/阻力' },
+          { id: 'k4', text: 'SMA 50 / SMA 20 位置', hint: '中短期动态均线' },
+          { id: 'k5', text: '超长期趋势线支撑/阻力', hint: '1930年起的趋势线交汇' },
+        ]
+      },
+      {
+        title: '目标点位输出',
+        items: [
+          { id: 'k6', text: '主目标点位 + 概率', hint: '如 6550 @50%' },
+          { id: 'k7', text: '备选目标 1 + 概率', hint: '如 6600 @30%' },
+          { id: 'k8', text: '备选目标 2 + 概率', hint: '如 6425 @20%' },
+          { id: 'k9', text: '所有目标概率之和 = 100%', hint: '确保概率完备性' },
+        ]
+      }
+    ]
+  }
+];
+
+// ============ STATE ============
+let state = {
+  checks: {},    // id -> boolean
+  signals: {},   // dim key -> 'bullish' | 'bearish' | 'neutral'
+  notes: {},     // dim key -> string
+};
+
+// ============ INIT ============
+function init() {
+  document.getElementById('metaDate').valueAsDate = new Date();
+  renderDimensions();
+  renderConfMeter();
+  renderDimBadges();
+  recalc();
+}
+
+function renderDimensions() {
+  const container = document.getElementById('dimensionsContainer');
+  container.innerHTML = '';
+
+  DIMS.forEach((dim, di) => {
+    const el = document.createElement('div');
+    el.className = 'dimension' + (di === 0 ? ' open' : '');
+    el.id = 'dim-' + dim.key;
+
+    const totalItems = dim.groups.reduce((s, g) => s + g.items.length, 0);
+
+    el.innerHTML = `
+      <div class="dim-header" onclick="toggleDim('${dim.key}')">
+        <div class="dim-icon" style="background:${dim.color}">${dim.letter}</div>
+        <div class="dim-info">
+          <h3>${dim.name}</h3>
+          <p>${dim.desc}</p>
+        </div>
+        <span class="dim-counter" id="counter-${dim.key}">0 / ${totalItems}</span>
+        <span class="dim-arrow">▼</span>
+      </div>
+      <div class="dim-body">
+        <div class="dim-content">
+          ${dim.groups.map(g => `
+            <div class="check-group">
+              <div class="check-group-title">${g.title}</div>
+              ${g.items.map(item => `
+                <div class="check-item" id="item-${item.id}" onclick="toggleCheck('${item.id}')">
+                  <div class="check-box">
+                    <svg viewBox="0 0 12 12"><polyline points="1.5 6 4.5 9 10.5 3"/></svg>
+                  </div>
+                  <div class="check-label">
+                    <div class="main">${item.text}</div>
+                    <div class="hint">${item.hint}</div>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          `).join('')}
+          <div style="margin-top:12px; display:flex; align-items:center; gap:8px;">
+            <span style="font-size:13px; color:var(--text-dim);">维度信号：</span>
+            <div class="signal-sel">
+              <button class="signal-btn bullish" onclick="setSignal(event,'${dim.key}','bullish')">看涨</button>
+              <button class="signal-btn neutral" onclick="setSignal(event,'${dim.key}','neutral')">中性</button>
+              <button class="signal-btn bearish" onclick="setSignal(event,'${dim.key}','bearish')">看跌</button>
+            </div>
+          </div>
+          <textarea class="notes-area" id="notes-${dim.key}" placeholder="${dim.name} 分析笔记..." rows="2" oninput="saveNotes('${dim.key}')"></textarea>
+        </div>
+      </div>
+    `;
+    container.appendChild(el);
+  });
+}
+
+function renderConfMeter() {
+  const meter = document.getElementById('confMeter');
+  meter.innerHTML = '';
+  for (let i = 0; i < 5; i++) {
+    const seg = document.createElement('div');
+    seg.className = 'seg';
+    seg.id = 'conf-seg-' + i;
+    meter.appendChild(seg);
+  }
+}
+
+function renderDimBadges() {
+  const container = document.getElementById('dimBadges');
+  container.innerHTML = DIMS.map(d => `
+    <div class="dim-badge" id="badge-${d.key}">
+      <span class="dot" style="background:${d.color}"></span>
+      <span>${d.letter}</span>
+      <span id="badge-pct-${d.key}">0%</span>
+    </div>
+  `).join('');
+}
+
+// ============ INTERACTIONS ============
+function toggleDim(key) {
+  document.getElementById('dim-' + key).classList.toggle('open');
+}
+
+function toggleCheck(id) {
+  state.checks[id] = !state.checks[id];
+  const el = document.getElementById('item-' + id);
+  if (state.checks[id]) el.classList.add('checked');
+  else el.classList.remove('checked');
+  recalc();
+}
+
+function setSignal(e, key, val) {
+  e.stopPropagation();
+  if (state.signals[key] === val) {
+    delete state.signals[key];
+  } else {
+    state.signals[key] = val;
+  }
+  // update buttons
+  const dim = document.getElementById('dim-' + key);
+  dim.querySelectorAll('.signal-btn').forEach(btn => {
+    btn.classList.remove('active');
+    if (btn.classList.contains(val) && state.signals[key] === val) {
+      btn.classList.add('active');
+    }
+  });
+  recalc();
+}
+
+function saveNotes(key) {
+  state.notes[key] = document.getElementById('notes-' + key).value;
+}
+
+// ============ RECALC ============
+function recalc() {
+  let totalChecked = 0;
+  let totalItems = 0;
+  let confluenceCount = 0;
+
+  DIMS.forEach(dim => {
+    let dimChecked = 0;
+    let dimTotal = 0;
+    dim.groups.forEach(g => {
+      g.items.forEach(item => {
+        dimTotal++;
+        totalItems++;
+        if (state.checks[item.id]) { dimChecked++; totalChecked++; }
+      });
+    });
+
+    const dimPct = dimTotal > 0 ? Math.round(dimChecked / dimTotal * 100) : 0;
+    document.getElementById('counter-' + dim.key).textContent = `${dimChecked} / ${dimTotal}`;
+    document.getElementById('badge-pct-' + dim.key).textContent = `${dimPct}%`;
+
+    // Confluence: dim has signal AND ≥50% checked
+    if (state.signals[dim.key] && dimPct >= 50) {
+      confluenceCount++;
+    }
+  });
+
+  // Total progress
+  const totalPct = totalItems > 0 ? Math.round(totalChecked / totalItems * 100) : 0;
+  document.getElementById('progressPct').textContent = totalPct + '%';
+  document.getElementById('progressBar').style.width = totalPct + '%';
+
+  // Confluence score
+  document.getElementById('confScore').textContent = confluenceCount + ' / 5';
+
+  const labels = ['尚未分析', '信号单一，置信度低', '两维确认，注意风险', '三维共振，中等置信', '四维共振，高置信', '五维完美共振！极高置信'];
+  const colors = ['var(--text-dim)', 'var(--danger)', 'var(--warn)', 'var(--accent-e)', 'var(--accent-c)', 'var(--accent-a)'];
+  document.getElementById('confLabel').textContent = labels[confluenceCount];
+  document.getElementById('confLabel').style.color = colors[confluenceCount];
+  document.getElementById('confScore').style.color = colors[confluenceCount];
+
+  // Meter segments
+  for (let i = 0; i < 5; i++) {
+    const seg = document.getElementById('conf-seg-' + i);
+    seg.style.background = i < confluenceCount ? colors[confluenceCount] : 'var(--border)';
+  }
+}
+
+// ============ EXPORT ============
+function exportReport() {
+  const ticker = document.getElementById('metaTicker').value || 'SPX';
+  const date = document.getElementById('metaDate').value;
+  const tf = document.getElementById('metaTf').value;
+
+  let md = `# TEACT 分析报告\n\n`;
+  md += `**标的**: ${ticker}  |  **日期**: ${date}  |  **时间框架**: ${tf}\n\n`;
+  md += `---\n\n`;
+
+  DIMS.forEach(dim => {
+    md += `## ${dim.name}\n\n`;
+    const sig = state.signals[dim.key];
+    if (sig) md += `**维度信号**: ${sig === 'bullish' ? '🔴 看涨' : sig === 'bearish' ? '🟢 看跌' : '⚪ 中性'}\n\n`;
+
+    dim.groups.forEach(g => {
+      md += `### ${g.title}\n\n`;
+      g.items.forEach(item => {
+        const checked = state.checks[item.id] ? '✅' : '⬜';
+        md += `- ${checked} ${item.text}\n`;
+      });
+      md += '\n';
+    });
+
+    const notes = state.notes[dim.key];
+    if (notes) md += `**笔记**: ${notes}\n\n`;
+    md += `---\n\n`;
+  });
+
+  // Verdict
+  md += `## 综合研判\n\n`;
+  const fields = [
+    ['方向', document.getElementById('verdictDir').value],
+    ['目标点位', document.getElementById('verdictTarget').value],
+    ['止损点位', document.getElementById('verdictStop').value],
+    ['时间窗口', document.getElementById('verdictTime').value],
+    ['置信度', document.getElementById('verdictConf').value],
+    ['仓位建议', document.getElementById('verdictPos').value],
+  ];
+  fields.forEach(([k, v]) => { if (v) md += `- **${k}**: ${v}\n`; });
+
+  const vNotes = document.getElementById('verdictNotes').value;
+  if (vNotes) md += `\n**分析笔记**:\n${vNotes}\n`;
+
+  // Copy to clipboard
+  navigator.clipboard.writeText(md).then(() => {
+    showToast('📋 报告已复制到剪贴板');
+  }).catch(() => {
+    // Fallback: download
+    const blob = new Blob([md], { type: 'text/markdown' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `TEACT-${ticker}-${date}.md`;
+    a.click();
+    showToast('📄 报告已下载');
+  });
+}
+
+function saveLocal() {
+  const data = {
+    state,
+    meta: {
+      ticker: document.getElementById('metaTicker').value,
+      date: document.getElementById('metaDate').value,
+      tf: document.getElementById('metaTf').value,
+    },
+    verdict: {
+      dir: document.getElementById('verdictDir').value,
+      target: document.getElementById('verdictTarget').value,
+      stop: document.getElementById('verdictStop').value,
+      time: document.getElementById('verdictTime').value,
+      conf: document.getElementById('verdictConf').value,
+      pos: document.getElementById('verdictPos').value,
+      notes: document.getElementById('verdictNotes').value,
+    }
+  };
+  localStorage.setItem('teact_checklist', JSON.stringify(data));
+  showToast('💾 已保存到本地');
+}
+
+function loadLocal() {
+  const raw = localStorage.getItem('teact_checklist');
+  if (!raw) { showToast('⚠️ 没有找到本地存档'); return; }
+  const data = JSON.parse(raw);
+
+  state = data.state || { checks: {}, signals: {}, notes: {} };
+
+  // Restore meta
+  if (data.meta) {
+    document.getElementById('metaTicker').value = data.meta.ticker || 'SPX';
+    document.getElementById('metaDate').value = data.meta.date || '';
+    document.getElementById('metaTf').value = data.meta.tf || '日线';
+  }
+
+  // Restore checks
+  Object.entries(state.checks).forEach(([id, val]) => {
+    const el = document.getElementById('item-' + id);
+    if (el) { val ? el.classList.add('checked') : el.classList.remove('checked'); }
+  });
+
+  // Restore signals
+  Object.entries(state.signals).forEach(([key, val]) => {
+    const dim = document.getElementById('dim-' + key);
+    if (dim) {
+      dim.querySelectorAll('.signal-btn').forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.classList.contains(val)) btn.classList.add('active');
+      });
+    }
+  });
+
+  // Restore notes
+  Object.entries(state.notes).forEach(([key, val]) => {
+    const el = document.getElementById('notes-' + key);
+    if (el) el.value = val;
+  });
+
+  // Restore verdict
+  if (data.verdict) {
+    document.getElementById('verdictDir').value = data.verdict.dir || '';
+    document.getElementById('verdictTarget').value = data.verdict.target || '';
+    document.getElementById('verdictStop').value = data.verdict.stop || '';
+    document.getElementById('verdictTime').value = data.verdict.time || '';
+    document.getElementById('verdictConf').value = data.verdict.conf || '';
+    document.getElementById('verdictPos').value = data.verdict.pos || '';
+    document.getElementById('verdictNotes').value = data.verdict.notes || '';
+  }
+
+  recalc();
+  showToast('📂 存档已加载');
+}
+
+function resetAll() {
+  if (!confirm('确定重置所有数据？')) return;
+  state = { checks: {}, signals: {}, notes: {} };
+  document.querySelectorAll('.check-item').forEach(el => el.classList.remove('checked'));
+  document.querySelectorAll('.signal-btn').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.notes-area').forEach(el => el.value = '');
+  document.getElementById('verdictDir').value = '';
+  document.getElementById('verdictTarget').value = '';
+  document.getElementById('verdictStop').value = '';
+  document.getElementById('verdictTime').value = '';
+  document.getElementById('verdictConf').value = '';
+  document.getElementById('verdictPos').value = '';
+  document.getElementById('verdictNotes').value = '';
+  recalc();
+  showToast('🗑 已重置');
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+init();
+</script>
+</body>
+</html>
