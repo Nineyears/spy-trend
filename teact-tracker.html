@@ -234,6 +234,9 @@
     <button class="tab-btn" onclick="switchTab('spx')">
       <span class="tab-icon">📈</span> SPX 走势
     </button>
+    <button class="tab-btn" onclick="switchTab('foodchain')">
+      <span class="tab-icon">🔗</span> 食物链监控
+    </button>
   </div>
 
   <!-- Tab 2: 预测验证 -->
@@ -698,6 +701,83 @@
       </div>
       <div style="color:var(--dim);font-size:13px;padding:40px;text-align:center;">
         SPX 走势图表将在此显示（内容从预测验证 tab 复制）
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab 4: 食物链监控 -->
+  <div id="tab-foodchain" class="tab-content">
+    <div style="padding: 20px 0;">
+      <h2 style="font-size: 20px; font-weight: 700; margin-bottom: 16px; color: var(--text);">
+        🔗 美股食物链监控面板
+      </h2>
+      <p style="color: var(--dim); font-size: 13px; margin-bottom: 24px;">
+        基于六层食物链结构监控关键节点，提前预警市场拐点
+      </p>
+
+      <!-- 预警区域 -->
+      <div id="foodchain-alerts" style="margin-bottom: 20px;"></div>
+
+      <!-- 监控卡片网格 -->
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-bottom: 24px;">
+
+        <!-- OPEX 监控 -->
+        <div class="stat-card" style="border-left: 4px solid var(--purple);">
+          <div class="label" style="font-weight: 600;">📅 OPEX 期权到期日</div>
+          <div class="value" style="font-size: 18px; margin: 8px 0;" id="opex-date">加载中...</div>
+          <div class="detail" id="opex-signal" style="color: var(--purple);"></div>
+        </div>
+
+        <!-- 季末再平衡 -->
+        <div class="stat-card" style="border-left: 4px solid var(--blue);">
+          <div class="label" style="font-weight: 600;">🔄 季末再平衡</div>
+          <div class="value" style="font-size: 18px; margin: 8px 0;" id="rebalance-info">加载中...</div>
+          <div class="detail" style="color: var(--blue);">养老金/ETF 被动资金调仓窗口</div>
+        </div>
+
+        <!-- CTA 持仓 -->
+        <div class="stat-card" style="border-left: 4px solid var(--green);">
+          <div class="label" style="font-weight: 600;">🤖 CTA 趋势持仓</div>
+          <div class="value" style="font-size: 18px; margin: 8px 0;" id="cta-signal">加载中...</div>
+          <div class="detail" id="cta-detail" style="color: var(--dim);"></div>
+        </div>
+
+        <!-- 散户情绪 -->
+        <div class="stat-card" style="border-left: 4px solid var(--amber);">
+          <div class="label" style="font-weight: 600;">👥 散户情绪</div>
+          <div class="value" style="font-size: 18px; margin: 8px 0;" id="sentiment-value">加载中...</div>
+          <div class="detail" id="sentiment-signal" style="color: var(--amber);"></div>
+        </div>
+
+        <!-- Gamma Wall -->
+        <div class="stat-card" style="border-left: 4px solid var(--cyan);">
+          <div class="label" style="font-weight: 600;">📊 Gamma Wall</div>
+          <div class="value" style="font-size: 18px; margin: 8px 0;" id="gamma-status">加载中...</div>
+          <div class="detail" id="gamma-signal" style="color: var(--cyan);"></div>
+        </div>
+
+      </div>
+
+      <!-- 综合信号解读 -->
+      <div class="stat-card" style="text-align: left;">
+        <div style="font-size: 14px; font-weight: 600; margin-bottom: 12px; color: var(--text);">
+          🎯 综合交易策略建议
+        </div>
+        <div id="foodchain-summary" style="color: var(--dim); font-size: 13px; line-height: 1.8;">
+          加载中...
+        </div>
+      </div>
+
+      <!-- 数据来源说明 -->
+      <div style="margin-top: 20px; padding: 16px; background: var(--card2); border-radius: 8px; font-size: 12px; color: var(--dim);">
+        <div style="font-weight: 600; margin-bottom: 8px; color: var(--text);">📚 数据来源说明</div>
+        <div style="line-height: 1.8;">
+          <div><strong>COT 持仓</strong>：CFTC 官方报告（每周五发布）</div>
+          <div><strong>OPEX 日期</strong>：每月第三个周五（自动计算）</div>
+          <div><strong>季末再平衡</strong>：3/6/9/12月25日左右（提前5天预警）</div>
+          <div><strong>Gamma Wall</strong>：模拟数据（实际需接入 SpotGamma API）</div>
+          <div><strong>散户情绪</strong>：模拟数据（实际可接入 CNN Fear & Greed）</div>
+        </div>
       </div>
     </div>
   </div>
@@ -2175,6 +2255,143 @@ function switchTab(tabId) {
     setTimeout(() => {
       drawChart();
     }, 50);
+  } else if (tabId === 'foodchain') {
+    setTimeout(() => {
+      loadFoodchainData();
+    }, 50);
+  }
+}
+
+// ============ FOODCHAIN MONITORING ============
+async function loadFoodchainData() {
+  try {
+    const response = await fetch(`${PROXY_BASE}/api/foodchain`);
+    const json = await response.json();
+
+    if (json.ok && json.data) {
+      renderFoodchainData(json.data);
+    } else {
+      throw new Error(json.error || '获取食物链数据失败');
+    }
+  } catch (e) {
+    console.error('loadFoodchainData failed:', e);
+    document.getElementById('foodchain-alerts').innerHTML =
+      `<div style="padding: 12px; background: rgba(239, 68, 68, 0.15); border: 1px solid var(--red); border-radius: 6px; color: var(--red);">
+        ⚠️ 无法获取食物链数据，请检查代理服务
+      </div>`;
+  }
+}
+
+function renderFoodchainData(data) {
+  const { opex, rebalancing, cta, sentiment, gamma, alerts } = data;
+
+  // 渲染预警信息
+  const alertsContainer = document.getElementById('foodchain-alerts');
+  if (alerts && alerts.length > 0) {
+    alertsContainer.innerHTML = alerts.map(alert => {
+      const levelColors = {
+        'danger': 'var(--red)',
+        'warning': 'var(--amber)',
+        'info': 'var(--blue)'
+      };
+      const color = levelColors[alert.level] || 'var(--dim)';
+      return `<div style="padding: 12px; margin-bottom: 8px; background: ${color}15; border: 1px solid ${color}; border-radius: 6px; color: ${color}; font-size: 13px;">
+        <strong>${alert.source}:</strong> ${alert.message}
+      </div>`;
+    }).join('');
+  } else {
+    alertsContainer.innerHTML = `<div style="padding: 12px; background: rgba(34, 197, 94, 0.15); border: 1px solid var(--green); border-radius: 6px; color: var(--green);">
+      ✅ 当前无预警信号
+    </div>`;
+  }
+
+  // OPEX
+  document.getElementById('opex-date').textContent = opex.date;
+  document.getElementById('opex-signal').textContent = opex.signal;
+
+  // 季末再平衡
+  if (rebalancing.dates && rebalancing.dates.length > 0) {
+    const nextRebalance = rebalancing.dates[0];
+    document.getElementById('rebalance-info').textContent =
+      `${nextRebalance.date} (还有 ${nextRebalance.days} 天)`;
+  } else {
+    document.getElementById('rebalance-info').textContent = '无近期季末再平衡';
+  }
+
+  // CTA 持仓
+  document.getElementById('cta-signal').textContent = cta.signal;
+  document.getElementById('cta-detail').textContent =
+    cta.error ? cta.error : `净持仓: ${cta.netPosition?.toLocaleString()} | 平均: ${cta.avgNetPosition?.toLocaleString()}`;
+
+  // 散户情绪
+  const sentimentColors = {
+    'extreme_fear': 'var(--red)',
+    'fear': 'var(--amber)',
+    'neutral': 'var(--dim)',
+    'greed': 'var(--green)',
+    'extreme_greed': 'var(--red)'
+  };
+  document.getElementById('sentiment-value').textContent = `${sentiment.fearGreed}/100`;
+  document.getElementById('sentiment-value').style.color = sentimentColors[sentiment.status] || 'var(--dim)';
+  document.getElementById('sentiment-signal').textContent = sentiment.signal;
+
+  // Gamma Wall
+  document.getElementById('gamma-status').textContent =
+    gamma.status === 'positive' ? '正 Gamma' : '负 Gamma';
+  document.getElementById('gamma-status').style.color =
+    gamma.status === 'positive' ? 'var(--cyan)' : 'var(--red)';
+  document.getElementById('gamma-signal').textContent = gamma.signal;
+
+  // 综合策略建议
+  generateStrategySummary(data);
+}
+
+function generateStrategySummary(data) {
+  const { opex, rebalancing, cta, sentiment, gamma, alerts } = data;
+  const recommendations = [];
+
+  // CTA 信号分析
+  if (cta.status === 'extreme_long') {
+    recommendations.push('⚠️ CTA 极度看多，注意回调风险，避免追高');
+  } else if (cta.status === 'extreme_short') {
+    recommendations.push('⚠️ CTA 极度看空，可能是底部，考虑逢低买入');
+  } else if (cta.status === 'long') {
+    recommendations.push('📈 CTA 看多，趋势向上，可考虑跟随');
+  }
+
+  // 散户情绪分析
+  if (sentiment.status === 'extreme_greed') {
+    recommendations.push('🤑 散户极度贪婪，注意风险，考虑减仓');
+  } else if (sentiment.status === 'extreme_fear') {
+    recommendations.push('😰 散户极度恐惧，可能是机会，考虑加仓');
+  }
+
+  // OPEX 分析
+  if (opex.daysAway <= 3 && opex.daysAway >= 0) {
+    recommendations.push(`📅 OPEX 还有 ${opex.daysAway} 天，波动可能放大，降低仓位或使用期权对冲`);
+  }
+
+  // Gamma Wall 分析
+  if (gamma.status === 'negative') {
+    recommendations.push('⚠️ 负 Gamma 状态，波动将被放大，风险增加');
+  } else {
+    recommendations.push('📊 正 Gamma 状态，波动被压制，市场相对稳定');
+  }
+
+  // 季末再平衡分析
+  if (rebalancing.dates && rebalancing.dates.length > 0) {
+    const nextRebalance = rebalancing.dates[0];
+    if (nextRebalance.days <= 5) {
+      recommendations.push(`🔄 季末再平衡还有 ${nextRebalance.days} 天，注意资金流向变化`);
+    }
+  }
+
+  // 生成综合建议
+  const summaryEl = document.getElementById('foodchain-summary');
+  if (recommendations.length > 0) {
+    summaryEl.innerHTML = recommendations.map(rec => `<div style="margin-bottom: 6px;">${rec}</div>`).join('');
+  } else {
+    summaryEl.innerHTML = '<div style="color: var(--green);">✅ 当前无强烈信号，建议维持中性仓位</div>';
   }
 }
 

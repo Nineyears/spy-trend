@@ -405,6 +405,178 @@ def fetch_all_cot():
     return results
 
 
+# ============ 食物链监控数据 ============
+
+def get_foodchain_data():
+    """获取食物链监控面板数据"""
+    from datetime import datetime, date
+    import calendar
+
+    now = datetime.now()
+    current_date = now.date()
+    current_month = now.month
+    current_year = now.year
+
+    # 1. 计算 OPEX 日（每月第三个周五）
+    def get_opex_date(year, month):
+        # 获取该月所有周五
+        fridays = []
+        for day in range(1, calendar.monthrange(year, month)[1] + 1):
+            if date(year, month, day).weekday() == 4:  # 0=周一, 4=周五
+                fridays.append(day)
+        return fridays[2] if len(fridays) >= 3 else fridays[-1]
+
+    opex_day = get_opex_date(current_year, current_month)
+    opex_date = date(current_year, current_month, opex_day)
+    days_to_opex = (opex_date - current_date).days
+
+    # 2. 计算季末再平衡日（3/6/9/12月25日左右）
+    def get_rebalance_dates(year, month):
+        # 季末前5天开始预警
+        if month in [3, 6, 9, 12]:
+            rebalance_day = 25
+            rebalance_date = date(year, month, rebalance_day)
+            if rebalance_date > current_date:
+                days_to_rebalance = (rebalance_date - current_date).days
+                return {'date': rebalance_date.strftime('%Y-%m-%d'), 'days': days_to_rebalance}
+        return None
+
+    # 当前季度和下季度的再平衡日
+    rebalance_current = get_rebalance_dates(current_year, current_month)
+    next_month = (current_month % 12) + 1
+    next_year = current_year + (1 if next_month == 1 else 0)
+    rebalance_next = get_rebalance_dates(next_year, next_month)
+    rebalance_dates = [d for d in [rebalance_current, rebalance_next] if d]
+
+    # 3. 获取 COT 数据（CTA 持仓）
+    cot_data = {}
+    try:
+        spx_cot = fetch_cot('13874A')  # SPX
+        if spx_cot and spx_cot.get('data'):
+            latest = spx_cot['data'][0]
+            net_pos = latest['netPos']
+            historical = spx_cot['data'][:12]  # 最近12周
+            net_positions = [d['netPos'] for d in historical]
+            avg_net = sum(net_positions) / len(net_positions)
+
+            # 判断 CTA 仓位状态
+            if net_pos > avg_net * 1.2:
+                cta_status = 'extreme_long'
+                cta_signal = '⚠️ CTA 极度看多 - 可能反转'
+            elif net_pos < avg_net * 0.8:
+                cta_status = 'extreme_short'
+                cta_signal = '⚠️ CTA 极度看空 - 可能反转'
+            elif net_pos > avg_net:
+                cta_status = 'long'
+                cta_signal = '📈 CTA 看多'
+            else:
+                cta_status = 'short'
+                cta_signal = '📉 CTA 看空'
+
+            cot_data = {
+                'contract': 'SPX',
+                'latestDate': latest['date'],
+                'netPosition': net_pos,
+                'avgNetPosition': round(avg_net, 0),
+                'status': cta_status,
+                'signal': cta_signal,
+                'trend': 'up' if net_pos > net_positions[-4] else 'down'  # 与4周前对比
+            }
+    except Exception as e:
+        print(f'[ERROR] get CTA signal: {e}')
+        cot_data = {'error': str(e)}
+
+    # 4. 散户情绪（模拟数据，实际可接入 CNN Fear & Greed）
+    # 这里用模拟数据，因为需要付费 API
+    sentiment_data = {
+        'fearGreed': 45,  # 0-100, <25 极度恐惧, >75 极度贪婪
+        'status': 'neutral',
+        'signal': '😐 情绪中性 - 无明显方向'
+    }
+    if sentiment_data['fearGreed'] < 25:
+        sentiment_data['status'] = 'extreme_fear'
+        sentiment_data['signal'] = '😰 极度恐惧 - 或是买入机会'
+    elif sentiment_data['fearGreed'] > 75:
+        sentiment_data['status'] = 'extreme_greed'
+        sentiment_data['signal'] = '🤑 极度贪婪 - 或是卖出信号'
+    elif sentiment_data['fearGreed'] < 45:
+        sentiment_data['status'] = 'fear'
+        sentiment_data['signal'] = '😨 恐惧 - 谨慎乐观'
+    elif sentiment_data['fearGreed'] > 55:
+        sentiment_data['status'] = 'greed'
+        sentiment_data['signal'] = '😃 贪婪 - 注意风险'
+
+    # 5. Gamma Wall（模拟数据，实际可接入 SpotGamma API）
+    gamma_data = {
+        'status': 'positive',  # positive/negative
+        'levels': [
+            {'level': 5200, 'type': 'call_wall', 'strength': 'high'},
+            {'level': 5100, 'type': 'put_wall', 'strength': 'medium'}
+        ],
+        'signal': '📊 正 Gamma - 波动被压制，市场稳定'
+    }
+
+    # 组装返回数据
+    return {
+        'timestamp': now.strftime('%Y-%m-%d %H:%M:%S'),
+        'opex': {
+            'date': opex_date.strftime('%Y-%m-%d'),
+            'daysAway': days_to_opex,
+            'signal': '📅 OPEX 还有 {} 天 - 注意波动放大风险'.format(days_to_opex) if days_to_opex > 0 else '📅 今日 OPEX - 波动可能放大'
+        },
+        'rebalancing': {
+            'dates': rebalance_dates,
+            'signal': f'🔄 季末再平衡: {len(rebalance_dates)} 个预警日'
+        },
+        'cta': cot_data,
+        'sentiment': sentiment_data,
+        'gamma': gamma_data,
+        'alerts': generate_foodchain_alerts(opex_date, rebalance_dates, cot_data, sentiment_data)
+    }
+
+
+def generate_foodchain_alerts(opex_date, rebalance_dates, cot_data, sentiment_data):
+    """生成食物链预警信息"""
+    alerts = []
+
+    # OPEX 预警
+    if opex_date:
+        days_to_opex = (opex_date - datetime.now().date()).days
+        if days_to_opex <= 3:
+            alerts.append({
+                'level': 'warning',
+                'source': 'OPEX',
+                'message': f'OPEX 还有 {days_to_opex} 天，波动可能放大'
+            })
+
+    # 季末再平衡预警
+    for rebalance in rebalance_dates:
+        if rebalance and rebalance['days'] <= 5:
+            alerts.append({
+                'level': 'warning',
+                'source': 'Rebalancing',
+                'message': f'季末再平衡还有 {rebalance["days"]} 天'
+            })
+
+    # CTA 极端仓位预警
+    if cot_data.get('status') in ['extreme_long', 'extreme_short']:
+        alerts.append({
+            'level': 'danger',
+            'source': 'CTA',
+            'message': cot_data.get('signal', 'CTA 极端仓位')
+        })
+
+    # 散户情绪极端预警
+    if sentiment_data.get('status') in ['extreme_fear', 'extreme_greed']:
+        alerts.append({
+            'level': 'info',
+            'source': 'Sentiment',
+            'message': sentiment_data.get('signal', '散户情绪极端')
+        })
+
+    return alerts
+
+
 # ============ HTTP 服务 ============
 
 class ProxyHandler(BaseHTTPRequestHandler):
@@ -455,9 +627,14 @@ class ProxyHandler(BaseHTTPRequestHandler):
             elif path == '/api/health':
                 self._send_json({'ok': True, 'port': PORT, 'cache_keys': len(cache['timestamps'])})
 
+            elif path == '/api/foodchain':
+                # 食物链监控面板数据
+                data = get_foodchain_data()
+                self._send_json({'ok': True, 'data': data})
+
             else:
                 self._send_json({'ok': False, 'error': f'未知路径: {path}',
-                                 'routes': ['/api/quotes', '/api/klines', '/api/cot', '/api/health']})
+                                 'routes': ['/api/quotes', '/api/klines', '/api/cot', '/api/health', '/api/foodchain']})
 
         except Exception as e:
             print(f'[ERROR] {path}: {e}')
