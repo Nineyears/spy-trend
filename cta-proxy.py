@@ -12,6 +12,7 @@ import re
 import urllib.request
 import urllib.error
 from http.server import HTTPServer, BaseHTTPRequestHandler
+from socketserver import ThreadingMixIn
 from urllib.parse import urlparse, parse_qs
 import threading
 import time
@@ -81,6 +82,7 @@ cache = {
     'cot': {},           # COT 持仓
     'timestamps': {},    # 缓存时间戳
 }
+cache_lock = threading.Lock()  # 多线程缓存访问锁
 CACHE_TTL_QUOTES = 60       # 行情缓存 60秒
 CACHE_TTL_KLINES = 3600     # K线缓存 1小时
 CACHE_TTL_COT = 7200        # COT 缓存 2小时（反正一周才更新一次）
@@ -205,9 +207,10 @@ def fetch_quotes(symbols):
 
     for sym in symbols:
         # 检查缓存
-        if sym in cache['quotes'] and now - cache['timestamps'].get(f'q_{sym}', 0) < CACHE_TTL_QUOTES:
-            results[sym] = cache['quotes'][sym]
-            continue
+        with cache_lock:
+            if sym in cache['quotes'] and now - cache['timestamps'].get(f'q_{sym}', 0) < CACHE_TTL_QUOTES:
+                results[sym] = cache['quotes'][sym]
+                continue
 
         if sym in SINA_FUTURES:
             code = SINA_FUTURES[sym]
@@ -243,8 +246,9 @@ def fetch_quotes(symbols):
             if parsed:
                 parsed['symbol'] = sym
                 results[sym] = parsed
-                cache['quotes'][sym] = parsed
-                cache['timestamps'][f'q_{sym}'] = now
+                with cache_lock:
+                    cache['quotes'][sym] = parsed
+                    cache['timestamps'][f'q_{sym}'] = now
     except Exception as e:
         print(f'[ERROR] fetch_quotes: {e}')
 
@@ -257,8 +261,9 @@ def fetch_klines(symbol, num=60):
     """
     now = time.time()
     cache_key = f'kline_{symbol}_{num}'
-    if cache_key in cache['klines'] and now - cache['timestamps'].get(cache_key, 0) < CACHE_TTL_KLINES:
-        return cache['klines'][cache_key]
+    with cache_lock:
+        if cache_key in cache['klines'] and now - cache['timestamps'].get(cache_key, 0) < CACHE_TTL_KLINES:
+            return cache['klines'][cache_key]
 
     # 美股 K 线
     sina_symbol = SINA_KLINE_SYMBOL.get(symbol)
@@ -303,8 +308,9 @@ def _fetch_klines_stock(symbol, sina_symbol, num, cache_key, now):
 
         # 新浪美股接口会忽略 num 参数返回全部历史，需要手动截断
         klines = klines[-num:]
-        cache['klines'][cache_key] = klines
-        cache['timestamps'][cache_key] = now
+        with cache_lock:
+            cache['klines'][cache_key] = klines
+            cache['timestamps'][cache_key] = now
         return klines
     except Exception as e:
         print(f'[ERROR] _fetch_klines_stock {symbol}: {e}')
@@ -339,8 +345,9 @@ def _fetch_klines_futures(symbol, sina_code, num, cache_key, now):
 
         # 只取最近 num 条
         klines = klines[-num:]
-        cache['klines'][cache_key] = klines
-        cache['timestamps'][cache_key] = now
+        with cache_lock:
+            cache['klines'][cache_key] = klines
+            cache['timestamps'][cache_key] = now
         return klines
     except Exception as e:
         print(f'[ERROR] _fetch_klines_futures {symbol}: {e}')
@@ -390,8 +397,9 @@ def fetch_cot(contract_code):
                 'netPos': long_pos - short_pos,
             })
 
-        cache['cot'][cache_key] = result
-        cache['timestamps'][cache_key] = now
+        with cache_lock:
+            cache['cot'][cache_key] = result
+            cache['timestamps'][cache_key] = now
         return result
     except Exception as e:
         print(f'[ERROR] fetch_cot {contract_code}: {e}')
@@ -672,10 +680,15 @@ class ProxyHandler(BaseHTTPRequestHandler):
         print(f'[{self.log_date_time_string()}] {args[0]}')
 
 
+class ThreadingHTTPServer(ThreadingMixIn, HTTPServer):
+    """多线程 HTTP 服务器，支持并发请求"""
+    daemon_threads = True  # 主线程退出时自动清理子线程
+
+
 def main():
     print(f'''
 ╔══════════════════════════════════════════════╗
-║   CTA 数据代理服务 v1.0                       ║
+║   CTA 数据代理服务 v1.1 (多线程)              ║
 ║   端口: {PORT}                                 ║
 ║                                              ║
 ║   API 端点:                                   ║
@@ -683,13 +696,14 @@ def main():
 ║   GET /api/klines?symbol=^GSPC&num=60        ║
 ║   GET /api/cot                               ║
 ║   GET /api/health                            ║
+║   GET /api/foodchain                         ║
 ║                                              ║
 ║   数据源: 新浪财经 + Tradingster              ║
 ║   Ctrl+C 退出                                ║
 ╚══════════════════════════════════════════════╝
 ''')
 
-    server = HTTPServer(('0.0.0.0', PORT), ProxyHandler)
+    server = ThreadingHTTPServer(('0.0.0.0', PORT), ProxyHandler)
     try:
         server.serve_forever()
     except KeyboardInterrupt:
