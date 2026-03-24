@@ -245,12 +245,12 @@
   <div class="stats-row">
     <div class="stat-card">
       <div class="label">总预测数</div>
-      <div class="value" style="color:var(--blue)">12</div>
-      <div class="detail">2月底 - 3月22日</div>
+      <div class="value" style="color:var(--blue)">13</div>
+      <div class="detail">2月底 - 3月24日</div>
     </div>
     <div class="stat-card">
       <div class="label">精确命中</div>
-      <div class="value" style="color:var(--green)">8</div>
+      <div class="value" style="color:var(--green)">9</div>
       <div class="detail">点位+时间双精确</div>
     </div>
     <div class="stat-card">
@@ -279,9 +279,9 @@
   <div class="chart-section">
     <div class="chart-title">命中率分布</div>
     <div class="accuracy-bar">
-      <div class="acc-seg hit" style="width:66.7%">精确命中 8</div>
-      <div class="acc-seg partial" style="width:8.3%">1</div>
-      <div class="acc-seg pending" style="width:25%">待验证 3</div>
+      <div class="acc-seg hit" style="width:69.2%">精确命中 9</div>
+      <div class="acc-seg partial" style="width:7.7%">1</div>
+      <div class="acc-seg pending" style="width:23.1%">待验证 3</div>
     </div>
     <div class="acc-legend">
       <span><span class="dot" style="background:var(--green)"></span>精确命中</span>
@@ -320,9 +320,11 @@
       </div>
       <div class="tl-item">
         <div class="tl-dot active"></div>
-        <div class="tl-date">2026年3月23日（下周一）⏳ 即将验证</div>
+        <div class="tl-date">2026年3月23日 ✅ 已验证</div>
         <div class="tl-content">
           预测 <span class="highlight">85% 概率大级别反弹</span> / 15% 概率崩盘
+          <br>实际：3/20 低点 6,506 → 3/23 收盘 6,581（<strong>+1.15%</strong>）
+          <br><strong>状态：反弹确认 ✅</strong>
           <br>判断依据：W[5] 启动 + 水逆结束 + 特朗普可能周日声明
         </div>
       </div>
@@ -834,8 +836,8 @@ const predictions = [
   },
   {
     date: '3月22日', prediction: '85% 下周一（3/23）大反弹 / 15% 崩盘',
-    actual: '明日验证',
-    status: 'pending', category: '波浪+占星'
+    actual: '3/20 低点 6,506 → 3/23 收盘 6,581（+1.15%）',
+    status: 'hit', category: '波浪+占星'
   },
   {
     date: '2月底', prediction: '牛市最终顶部在 2026年5月（或推迟至8月）',
