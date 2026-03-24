@@ -359,12 +359,14 @@ def fetch_cot(contract_code):
     """从 Tradingster 获取 COT 数据"""
     now = time.time()
     cache_key = f'cot_{contract_code}'
-    if cache_key in cache['cot'] and now - cache['timestamps'].get(cache_key, 0) < CACHE_TTL_COT:
-        return cache['cot'][cache_key]
+    # 禁用缓存强制重新拉取（测试用）
+    # if cache_key in cache['cot'] and now - cache['timestamps'].get(cache_key, 0) < CACHE_TTL_COT:
+    #     return cache['cot'][cache_key]
 
     try:
         url = f'{TRADINGSTER_BASE}{contract_code}'
-        raw = make_request(url)
+        # 添加 Referer 避免 Tradingster 缓存问题
+        raw = make_request(url, referer='https://www.tradingster.com/cot/legacy-futures/')
         data = json.loads(raw.decode('utf-8'))
 
         if not data or not isinstance(data, list):
