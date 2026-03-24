@@ -312,7 +312,7 @@
     <div class="timeline">
       <div class="tl-item">
         <div class="tl-dot done"></div>
-        <div class="tl-date">2026年3月20日 ✅ 已验证</div>
+        <div class="tl-date">2026年3月20日 ✅ 已验证 <span style="color:var(--cyan); font-size:11px;">验证: 3月21日</span></div>
         <div class="tl-content">
           W[4] 扩大三角形完成，底部 <span class="price">@6,473</span>
           <br>预测底部区间 6,425-6,550 · 实际 6,473 ✅
@@ -320,7 +320,7 @@
       </div>
       <div class="tl-item">
         <div class="tl-dot active"></div>
-        <div class="tl-date">2026年3月23日 ✅ 已验证</div>
+        <div class="tl-date">2026年3月23日 ✅ 已验证 <span style="color:var(--cyan); font-size:11px;">验证: 3月24日</span></div>
         <div class="tl-content">
           预测 <span class="highlight">85% 概率大级别反弹</span> / 15% 概率崩盘
           <br>实际：3/20 低点 6,506 → 3/23 收盘 6,581（<strong>+1.15%</strong>）
@@ -792,62 +792,62 @@ const predictions = [
   {
     date: '2月底', prediction: '3月2日（满月）可能出现"小型黑色星期一"',
     actual: '3/2-3 血月期间暴跌近200点（6,901→6,710）',
-    status: 'hit', category: '时间+事件'
+    status: 'hit', category: '时间+事件', verifiedDate: '3月3日'
   },
   {
     date: '2月底', prediction: '普埃茨崩盘窗口：2/26-3/9 为高风险期',
     actual: '该窗口内 SPX 从 ~6,900 持续下跌至 6,636',
-    status: 'hit', category: '周期'
+    status: 'hit', category: '周期', verifiedDate: '3月10日'
   },
   {
     date: '2月底', prediction: '兴登堡凶兆 5+ 次闪烁 → 顶部预警',
     actual: '市场确实从 7,002 高位大幅回调 -7.6%',
-    status: 'hit', category: '周期'
+    status: 'hit', category: '周期', verifiedDate: '3月10日'
   },
   {
     date: '3月5日', prediction: '超级穹顶破位 → 下跌延续至3月下旬',
     actual: '下跌确实延续至 3/20，穹顶形态准确',
-    status: 'hit', category: '趋势+形态'
+    status: 'hit', category: '趋势+形态', verifiedDate: '3月21日'
   },
   {
     date: '3月5日', prediction: '3/9 水逆中点 → 崩盘 + 深V反转',
     actual: '3/9 盘前低至 6,636 → 收盘 6,796（单日 160+点V反转）',
-    status: 'hit', category: '占星+波浪'
+    status: 'hit', category: '占星+波浪', verifiedDate: '3月10日'
   },
   {
     date: '3月5日', prediction: '第一支撑位 6,600',
     actual: '3/9 最低 6,636，接近 6,600',
-    status: 'hit', category: '技术'
+    status: 'hit', category: '技术', verifiedDate: '3月10日'
   },
   {
     date: '3月12日', prediction: '终极底部在 6,500 区域附近',
     actual: '实际底部 6,473（3/20），误差仅 27 点',
-    status: 'hit', category: '波浪+技术'
+    status: 'hit', category: '波浪+技术', verifiedDate: '3月21日'
   },
   {
     date: '3月12日', prediction: '水逆结束日 3/20 = W[E] 浪完成',
     actual: '3/20 确实触及最低 6,473 并反弹',
-    status: 'hit', category: '占星+波浪'
+    status: 'hit', category: '占星+波浪', verifiedDate: '3月21日'
   },
   {
     date: '3月18日', prediction: '底部概率分布：6,550 @50% / 6,600 @30% / 6,425 @20%',
     actual: '实际 6,473 介于 50% 和 20% 路径之间',
-    status: 'partial', category: '技术'
+    status: 'partial', category: '技术', verifiedDate: '3月21日'
   },
   {
     date: '3月22日', prediction: '85% 下周一（3/23）大反弹 / 15% 崩盘',
     actual: '3/20 低点 6,506 → 3/23 收盘 6,581（+1.15%）',
-    status: 'hit', category: '波浪+占星'
+    status: 'hit', category: '波浪+占星', verifiedDate: '3月24日'
   },
   {
     date: '2月底', prediction: '牛市最终顶部在 2026年5月（或推迟至8月）',
     actual: '需 SPX 先创 ATH 再确认顶部',
-    status: 'pending', category: '周期+波浪'
+    status: 'pending', category: '周期+波浪', verifiedDate: null
   },
   {
     date: '2月底', prediction: '顶部之后 → 大级别熊市',
     actual: '最远期预测，需数月验证',
-    status: 'pending', category: '周期+波浪'
+    status: 'pending', category: '周期+波浪', verifiedDate: null
   },
 ];
 
@@ -869,7 +869,9 @@ predictions.forEach((p, i) => {
       </div>
       <div class="pred-result">
         <div class="result-tag ${p.status}">${labels[p.status]}</div>
-        <div class="result-date">${p.date}</div>
+        <div class="result-date">
+          预测: ${p.date}${p.verifiedDate ? `<br><span style="color:var(--cyan)">验证: ${p.verifiedDate}</span>` : ''}
+        </div>
       </div>
     </div>
   `;
