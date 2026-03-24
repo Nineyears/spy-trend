@@ -551,7 +551,7 @@ def generate_foodchain_alerts(opex_date, rebalance_dates, cot_data, sentiment_da
 
     # OPEX 预警（只在临近 3 天内预警）
     if opex_date:
-        days_to_opex = (opex_date - datetime.now().date()).days
+        days_to_opex = (opex_date - date.today()).days
         if days_to_opex >= 0 and days_to_opex <= 3:
             alerts.append({
                 'level': 'warning',
