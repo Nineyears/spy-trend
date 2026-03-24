@@ -428,9 +428,17 @@ def get_foodchain_data():
                 fridays.append(day)
         return fridays[2] if len(fridays) >= 3 else fridays[-1]
 
+    # 如果本月 OPEX 已过，计算下个月
     opex_day = get_opex_date(current_year, current_month)
     opex_date = date(current_year, current_month, opex_day)
     days_to_opex = (opex_date - current_date).days
+
+    if days_to_opex < 0:
+        next_month = (current_month % 12) + 1
+        next_year = current_year + (1 if next_month == 1 else 0)
+        next_opex_day = get_opex_date(next_year, next_month)
+        opex_date = date(next_year, next_month, next_opex_day)
+        days_to_opex = (opex_date - current_date).days
 
     # 2. 计算季末再平衡日（3/6/9/12月25日左右）
     def get_rebalance_dates(year, month):
@@ -524,7 +532,7 @@ def get_foodchain_data():
         'opex': {
             'date': opex_date.strftime('%Y-%m-%d'),
             'daysAway': days_to_opex,
-            'signal': '📅 OPEX 还有 {} 天 - 注意波动放大风险'.format(days_to_opex) if days_to_opex > 0 else '📅 今日 OPEX - 波动可能放大'
+            'signal': '📅 下次 OPEX 还有 {} 天'.format(days_to_opex) if days_to_opex > 0 else '📅 今日 OPEX - 波动可能放大'
         },
         'rebalancing': {
             'dates': rebalance_dates,
@@ -541,10 +549,10 @@ def generate_foodchain_alerts(opex_date, rebalance_dates, cot_data, sentiment_da
     """生成食物链预警信息"""
     alerts = []
 
-    # OPEX 预警
+    # OPEX 预警（只在临近 3 天内预警）
     if opex_date:
         days_to_opex = (opex_date - datetime.now().date()).days
-        if days_to_opex <= 3:
+        if days_to_opex >= 0 and days_to_opex <= 3:
             alerts.append({
                 'level': 'warning',
                 'source': 'OPEX',
