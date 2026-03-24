@@ -728,6 +728,10 @@
           <div class="label" style="font-weight: 600;">📅 OPEX 期权到期日</div>
           <div class="value" style="font-size: 18px; margin: 8px 0;" id="opex-date">加载中...</div>
           <div class="detail" id="opex-signal" style="color: var(--purple);"></div>
+          <div style="margin-top: 8px; display: flex; flex-wrap: wrap; gap: 6px;">
+            <a href="https://www.cboe.com/options-expiration-calendar/" target="_blank" style="font-size:11px;padding:2px 8px;border-radius:4px;background:rgba(168,85,247,0.12);color:var(--purple);text-decoration:none;border:1px solid rgba(168,85,247,0.25);">📅 CBOE 期权日历</a>
+            <a href="https://www.cmegroup.com/trading/equity-index/us-index/e-mini-sandp500_product_calendar_options.html" target="_blank" style="font-size:11px;padding:2px 8px;border-radius:4px;background:rgba(168,85,247,0.12);color:var(--purple);text-decoration:none;border:1px solid rgba(168,85,247,0.25);">📅 CME 到期日</a>
+          </div>
         </div>
 
         <!-- 季末再平衡 -->
@@ -735,6 +739,10 @@
           <div class="label" style="font-weight: 600;">🔄 季末再平衡</div>
           <div class="value" style="font-size: 18px; margin: 8px 0;" id="rebalance-info">加载中...</div>
           <div class="detail" style="color: var(--blue);">养老金/ETF 被动资金调仓窗口</div>
+          <div style="margin-top: 8px; display: flex; flex-wrap: wrap; gap: 6px;">
+            <a href="https://x.com/search?q=quarter%20end%20rebalance&src=typed_query&f=live" target="_blank" style="font-size:11px;padding:2px 8px;border-radius:4px;background:rgba(59,130,246,0.12);color:var(--blue);text-decoration:none;border:1px solid rgba(59,130,246,0.25);">🐦 X 搜索动态</a>
+            <a href="https://www.bloomberg.com/markets" target="_blank" style="font-size:11px;padding:2px 8px;border-radius:4px;background:rgba(59,130,246,0.12);color:var(--blue);text-decoration:none;border:1px solid rgba(59,130,246,0.25);">📰 Bloomberg</a>
+          </div>
         </div>
 
         <!-- CTA 持仓 -->
@@ -742,6 +750,13 @@
           <div class="label" style="font-weight: 600;">🤖 CTA 趋势持仓</div>
           <div class="value" style="font-size: 18px; margin: 8px 0;" id="cta-signal">加载中...</div>
           <div class="detail" id="cta-detail" style="color: var(--dim);"></div>
+          <div style="margin-top: 8px; display: flex; flex-wrap: wrap; gap: 6px;" id="cta-links">
+            <a href="https://www.tradingster.com/cot/legacy-futures/13874A" target="_blank" style="font-size:11px;padding:2px 8px;border-radius:4px;background:rgba(34,197,94,0.12);color:var(--green);text-decoration:none;border:1px solid rgba(34,197,94,0.25);">📊 S&P 500 COT</a>
+            <a href="https://www.tradingster.com/cot/legacy-futures/209742" target="_blank" style="font-size:11px;padding:2px 8px;border-radius:4px;background:rgba(34,197,94,0.12);color:var(--green);text-decoration:none;border:1px solid rgba(34,197,94,0.25);">📊 Nasdaq COT</a>
+            <a href="https://www.tradingster.com/cot/legacy-futures/088691" target="_blank" style="font-size:11px;padding:2px 8px;border-radius:4px;background:rgba(245,158,11,0.12);color:var(--amber);text-decoration:none;border:1px solid rgba(245,158,11,0.25);">📊 Gold COT</a>
+            <a href="https://www.tradingster.com/cot/legacy-futures/067651" target="_blank" style="font-size:11px;padding:2px 8px;border-radius:4px;background:rgba(239,68,68,0.12);color:var(--red);text-decoration:none;border:1px solid rgba(239,68,68,0.25);">📊 Oil COT</a>
+            <a href="https://www.cftc.gov/dea/futures/deacmelf.htm" target="_blank" style="font-size:11px;padding:2px 8px;border-radius:4px;background:rgba(59,130,246,0.12);color:var(--blue);text-decoration:none;border:1px solid rgba(59,130,246,0.25);">🏛️ CFTC 官方</a>
+          </div>
         </div>
 
         <!-- 散户情绪 -->
@@ -749,6 +764,10 @@
           <div class="label" style="font-weight: 600;">👥 散户情绪</div>
           <div class="value" style="font-size: 18px; margin: 8px 0;" id="sentiment-value">加载中...</div>
           <div class="detail" id="sentiment-signal" style="color: var(--amber);"></div>
+          <div style="margin-top: 8px; display: flex; flex-wrap: wrap; gap: 6px;">
+            <a href="https://edition.cnn.com/markets/fear-and-greed" target="_blank" style="font-size:11px;padding:2px 8px;border-radius:4px;background:rgba(245,158,11,0.12);color:var(--amber);text-decoration:none;border:1px solid rgba(245,158,11,0.25);">😨 CNN Fear & Greed</a>
+            <a href="https://www.aaii.com/sentimentsurvey" target="_blank" style="font-size:11px;padding:2px 8px;border-radius:4px;background:rgba(245,158,11,0.12);color:var(--amber);text-decoration:none;border:1px solid rgba(245,158,11,0.25);">📋 AAII 情绪调查</a>
+          </div>
         </div>
 
         <!-- Gamma Wall -->
@@ -756,6 +775,10 @@
           <div class="label" style="font-weight: 600;">📊 Gamma Wall</div>
           <div class="value" style="font-size: 18px; margin: 8px 0;" id="gamma-status">加载中...</div>
           <div class="detail" id="gamma-signal" style="color: var(--cyan);"></div>
+          <div style="margin-top: 8px; display: flex; flex-wrap: wrap; gap: 6px;">
+            <a href="https://www.spotgamma.com" target="_blank" style="font-size:11px;padding:2px 8px;border-radius:4px;background:rgba(6,182,212,0.12);color:var(--cyan);text-decoration:none;border:1px solid rgba(6,182,212,0.25);">📈 SpotGamma</a>
+            <a href="https://unusualwhales.com/flow" target="_blank" style="font-size:11px;padding:2px 8px;border-radius:4px;background:rgba(6,182,212,0.12);color:var(--cyan);text-decoration:none;border:1px solid rgba(6,182,212,0.25);">🐋 Unusual Whales</a>
+          </div>
         </div>
 
       </div>
