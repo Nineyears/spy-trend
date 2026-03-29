@@ -220,7 +220,7 @@
 
   <div class="header">
     <h1>TEACT 预测跟踪验证面板</h1>
-    <div class="sub">MasterPandaWu (capitalwatch) · 2026年2月-3月预测序列 · 实时验证</div>
+    <div class="sub">MasterPandaWu (capitalwatch) · 2026年2月-3月预测序列 · 实时验证 · 3/29 重大更新</div>
   </div>
 
   <!-- Tab Navigation -->
@@ -245,33 +245,38 @@
   <div class="stats-row">
     <div class="stat-card">
       <div class="label">总预测数</div>
-      <div class="value" style="color:var(--blue)">13</div>
-      <div class="detail">2月底 - 3月24日</div>
+      <div class="value" style="color:var(--blue)">16</div>
+      <div class="detail">2月底 - 3月29日</div>
     </div>
     <div class="stat-card">
       <div class="label">精确命中</div>
-      <div class="value" style="color:var(--green)">9</div>
+      <div class="value" style="color:var(--green)">7</div>
       <div class="detail">点位+时间双精确</div>
     </div>
     <div class="stat-card">
       <div class="label">部分命中</div>
-      <div class="value" style="color:var(--amber)">1</div>
+      <div class="value" style="color:var(--amber)">3</div>
       <div class="detail">方向对，精度差</div>
     </div>
     <div class="stat-card">
+      <div class="label">未命中</div>
+      <div class="value" style="color:var(--red)">1</div>
+      <div class="detail">W[5]新高被否定</div>
+    </div>
+    <div class="stat-card">
       <div class="label">待验证</div>
-      <div class="value" style="color:var(--dim)">3</div>
-      <div class="detail">中长期预测</div>
+      <div class="value" style="color:var(--dim)">5</div>
+      <div class="detail">含3/29新预测</div>
     </div>
     <div class="stat-card">
       <div class="label">已验证命中率</div>
-      <div class="value" style="color:var(--green)">89%</div>
-      <div class="detail">8/9 (展示偏差可能)</div>
+      <div class="value" style="color:var(--amber)">64%</div>
+      <div class="detail">7/11 (3/29重大修正)</div>
     </div>
     <div class="stat-card">
       <div class="label">SPX 当前</div>
-      <div class="value" style="color:var(--cyan)">6,506</div>
-      <div class="detail">ATH: 7,002 · -7.1%</div>
+      <div class="value" style="color:var(--bearish)">6,356</div>
+      <div class="detail">ATH: 7,002 · -9.2%</div>
     </div>
   </div>
 
@@ -279,9 +284,10 @@
   <div class="chart-section">
     <div class="chart-title">命中率分布</div>
     <div class="accuracy-bar">
-      <div class="acc-seg hit" style="width:69.2%">精确命中 9</div>
-      <div class="acc-seg partial" style="width:7.7%">1</div>
-      <div class="acc-seg pending" style="width:23.1%">待验证 3</div>
+      <div class="acc-seg hit" style="width:43.75%">精确命中 7</div>
+      <div class="acc-seg partial" style="width:18.75%">部分 3</div>
+      <div class="acc-seg miss" style="width:6.25%">1</div>
+      <div class="acc-seg pending" style="width:31.25%">待验证 5</div>
     </div>
     <div class="acc-legend">
       <span><span class="dot" style="background:var(--green)"></span>精确命中</span>
@@ -295,7 +301,7 @@
   <div class="chart-section">
     <div class="chart-title">
       SPX 3月走势 vs TEACT 预测标记
-      <span class="tag">实际价格数据</span>
+      <span class="tag">实际价格 · 截至 3/27</span>
     </div>
     <canvas id="spxChart" height="320"></canvas>
   </div>
@@ -308,50 +314,66 @@
 
   <!-- Major forward predictions -->
   <div class="major-section">
-    <h3>🔮 中长期大判断 — 跟踪中</h3>
+    <h3>🔮 中长期大判断 — 跟踪中 <span style="font-size:12px;color:var(--red);font-weight:400;">⚡ 3/29 重大更新</span></h3>
     <div class="timeline">
       <div class="tl-item">
         <div class="tl-dot done"></div>
         <div class="tl-date">2026年3月20日 ✅ 已验证 <span style="color:var(--cyan); font-size:11px;">验证: 3月21日</span></div>
         <div class="tl-content">
-          W[4] 扩大三角形完成，底部 <span class="price">@6,473</span>
+          W[4] 扩大三角形完成，暂时底部 <span class="price">@6,473</span>
           <br>预测底部区间 6,425-6,550 · 实际 6,473 ✅
+          <br><span style="color:var(--amber);font-size:12px;">⚠️ 3/29更新：6,473 非真正底部，后续跌至 6,356</span>
         </div>
       </div>
       <div class="tl-item">
-        <div class="tl-dot active"></div>
+        <div class="tl-dot done"></div>
         <div class="tl-date">2026年3月23日 ✅ 已验证 <span style="color:var(--cyan); font-size:11px;">验证: 3月24日</span></div>
         <div class="tl-content">
           预测 <span class="highlight">85% 概率大级别反弹</span> / 15% 概率崩盘
           <br>实际：3/20 低点 6,506 → 3/23 收盘 6,581（<strong>+1.15%</strong>）
-          <br><strong>状态：反弹确认 ✅</strong>
-          <br>判断依据：W[5] 启动 + 水逆结束 + 特朗普可能周日声明
+          <br><strong>状态：短暂反弹确认 ✅，但反弹未能持续</strong>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot" style="border-color:var(--red);background:var(--red);"></div>
+        <div class="tl-date">2026年3月27-28日 ❌ 结构性崩坏 <span style="color:var(--red); font-size:11px;">3/29 确认</span></div>
+        <div class="tl-content">
+          SPX 从 <span class="price">6,633</span> 坠落至 <span class="price">6,356</span>（两天暴跌 -277 点）
+          <br>未能收复 <span class="highlight">6,620 关键区域</span>，失守维持牛市一年的支撑结构
+          <br>RSI[9] 跌破前期重要低点，波动级别超出预期
+          <br><strong style="color:var(--red)">→ W[5] 推新高路径被否定</strong>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot active"></div>
+        <div class="tl-date">2026年3月29日 🆕 最新判断</div>
+        <div class="tl-content">
+          <span class="highlight">🚨 SPX 7002 极大概率已确认见顶</span>
+          <br>波浪计数重大调整：从"扩张终结楔形"改为<strong style="color:var(--red)">"扩张引导楔形"</strong>
+          <br>$NYMO 罕见双重重大背离 → 预示接下来反弹将非常剧烈
+          <br>超短期反弹目标：<span class="price">6,530</span>
+          <br>回补缺口：<span class="price">6,340</span> · 建仓底部区域：<span class="price">6,300-6,310</span>
+          <br>3月底收盘理应高于 <span class="price">6,368</span>
         </div>
       </div>
       <div class="tl-item">
         <div class="tl-dot future"></div>
-        <div class="tl-date">2026年4月-5月 ⏳ 待验证</div>
+        <div class="tl-date">2026年 "火马年" 效应 ⏳ 核心周期预测</div>
         <div class="tl-content">
-          W[5] 推动浪冲击 <span class="highlight">历史新高 (ATH)</span>
-          <br>需要超过 <span class="price">7,002</span> 才算确认
-          <br>月线 RSI 需制造新的背离
+          <span class="highlight">🐎 2026 丙午"火马年"</span>（始于 2026.2.17）
+          <br>历史对比：1966 赤马年市场 10 个月暴跌 30%
+          <br>当前道指周线与 1966 走势惊人吻合
+          <br>预测：2026 为周期 B 顶点 → 开启萧条经济周期 C
         </div>
       </div>
       <div class="tl-item">
         <div class="tl-dot future"></div>
-        <div class="tl-date">2026年5月（或推迟至8月）⏳ 核心预测</div>
+        <div class="tl-date">2026-2032年 ⏳ 最远期预测</div>
         <div class="tl-content">
-          <span class="highlight">🚨 牛市最终顶部</span>
-          <br>条件：月线 RSI 背离 + 新 ATH = 卖出信号
-          <br>之后进入大级别熊市
-        </div>
-      </div>
-      <div class="tl-item">
-        <div class="tl-dot future"></div>
-        <div class="tl-date">2026年下半年 ⏳ 最远期预测</div>
-        <div class="tl-content">
-          <span class="highlight">大级别熊市</span>开启
-          <br>多级别 RSI 背离全面确认后的系统性下跌
+          <span class="highlight">🚨 世代级熊市 + 萧条周期</span>
+          <br>从 SPX=7003 开始的下跌 → "扩张引导楔形"（非终结楔形）
+          <br>萧条经济周期 C 延续至 <strong style="color:var(--red)">2032 年</strong>才见底
+          <br>17年大周期理论支撑
         </div>
       </div>
     </div>
@@ -359,53 +381,49 @@
 
   <!-- Verification checklist for major prediction -->
   <div class="major-section">
-    <h3>📋 大判断验证条件清单</h3>
+    <h3>📋 大判断验证条件清单 <span style="font-size:12px;color:var(--red);font-weight:400;">⚡ 3/29 重大修订</span></h3>
     <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px;">
 
       <div style="background:var(--card2); border-radius:8px; padding:16px;">
-        <div style="font-size:14px; font-weight:600; color:var(--bullish); margin-bottom:12px;">
-          🔴 牛市延续条件（需全部满足）
+        <div style="font-size:14px; font-weight:600; color:var(--red); margin-bottom:12px;">
+          🚨 7002 见顶确认条件
         </div>
         <div class="verify-items">
           <div class="v-item" style="display:flex;gap:8px;align-items:flex-start;padding:6px 0;font-size:13px;">
             <span style="color:var(--green)">✅</span>
-            <span>3月20日底部确立 @6,473 → <strong style="color:var(--green)">已确认</strong></span>
+            <span>SPX 跌破 6,473 W[4] 底部 → <strong style="color:var(--red)">3/28 已确认 (6,356)</strong></span>
+          </div>
+          <div class="v-item" style="display:flex;gap:8px;align-items:flex-start;padding:6px 0;font-size:13px;">
+            <span style="color:var(--green)">✅</span>
+            <span>未能收复 6,620 关键区域 → <strong style="color:var(--red)">已确认</strong></span>
+          </div>
+          <div class="v-item" style="display:flex;gap:8px;align-items:flex-start;padding:6px 0;font-size:13px;">
+            <span style="color:var(--green)">✅</span>
+            <span>RSI[9] 跌破前期重要低点 → <strong style="color:var(--red)">已确认</strong></span>
           </div>
           <div class="v-item" style="display:flex;gap:8px;align-items:flex-start;padding:6px 0;font-size:13px;">
             <span style="color:var(--amber)">⏳</span>
-            <span>下周一（3/23）出现有力反弹 → <strong style="color:var(--amber)">明日验证</strong></span>
-          </div>
-          <div class="v-item" style="display:flex;gap:8px;align-items:flex-start;padding:6px 0;font-size:13px;">
-            <span style="color:var(--dim)">⬜</span>
-            <span>W[5] 推动浪展开，5浪结构清晰</span>
-          </div>
-          <div class="v-item" style="display:flex;gap:8px;align-items:flex-start;padding:6px 0;font-size:13px;">
-            <span style="color:var(--dim)">⬜</span>
-            <span>SPX 突破前高 7,002 创新 ATH</span>
-          </div>
-          <div class="v-item" style="display:flex;gap:8px;align-items:flex-start;padding:6px 0;font-size:13px;">
-            <span style="color:var(--dim)">⬜</span>
-            <span>月线 RSI 在新 ATH 处形成看跌背离</span>
+            <span>波浪计数调整为"扩张引导楔形" → <strong style="color:var(--amber)">观察中</strong></span>
           </div>
         </div>
       </div>
 
       <div style="background:var(--card2); border-radius:8px; padding:16px;">
         <div style="font-size:14px; font-weight:600; color:var(--bearish); margin-bottom:12px;">
-          🟢 熊市启动条件（终极卖出信号）
+          🟢 世代级熊市确认条件
         </div>
         <div class="verify-items">
           <div class="v-item" style="display:flex;gap:8px;align-items:flex-start;padding:6px 0;font-size:13px;">
-            <span style="color:var(--dim)">⬜</span>
+            <span style="color:var(--green)">✅</span>
             <span>日线 RSI 背离 + 周线 RSI 背离 <strong style="color:var(--green)">已具备</strong></span>
           </div>
           <div class="v-item" style="display:flex;gap:8px;align-items:flex-start;padding:6px 0;font-size:13px;">
-            <span style="color:var(--dim)">⬜</span>
-            <span>月线 RSI 背离形成（需新 ATH）</span>
+            <span style="color:var(--green)">✅</span>
+            <span>SPX 牛市支撑结构失守 → <strong style="color:var(--red)">3/28 已确认</strong></span>
           </div>
           <div class="v-item" style="display:flex;gap:8px;align-items:flex-start;padding:6px 0;font-size:13px;">
-            <span style="color:var(--dim)">⬜</span>
-            <span>三级别 RSI 背离同时确认</span>
+            <span style="color:var(--amber)">⏳</span>
+            <span>$NYMO 双重重大背离后的剧烈反弹 → <strong style="color:var(--amber)">待观察</strong></span>
           </div>
           <div class="v-item" style="display:flex;gap:8px;align-items:flex-start;padding:6px 0;font-size:13px;">
             <span style="color:var(--dim)">⬜</span>
@@ -413,31 +431,59 @@
           </div>
           <div class="v-item" style="display:flex;gap:8px;align-items:flex-start;padding:6px 0;font-size:13px;">
             <span style="color:var(--dim)">⬜</span>
-            <span>兴登堡凶兆再次密集触发</span>
+            <span>火马年效应：与 1966 年走势持续吻合</span>
+          </div>
+          <div class="v-item" style="display:flex;gap:8px;align-items:flex-start;padding:6px 0;font-size:13px;">
+            <span style="color:var(--dim)">⬜</span>
+            <span>SPX 跌破 6,300 确认扩张引导楔形</span>
           </div>
         </div>
       </div>
 
       <div style="background:var(--card2); border-radius:8px; padding:16px;">
-        <div style="font-size:14px; font-weight:600; color:var(--red); margin-bottom:12px;">
-          🚨 预测否定条件（模型失效信号）
+        <div style="font-size:14px; font-weight:600; color:var(--amber); margin-bottom:12px;">
+          ⚠️ 短期反弹验证（3/29 预测）
         </div>
         <div class="verify-items">
           <div class="v-item" style="display:flex;gap:8px;align-items:flex-start;padding:6px 0;font-size:13px;">
             <span style="color:var(--dim)">⬜</span>
-            <span>SPX 跌破 6,473 底部 → W[4] 计数失败</span>
+            <span>超短期反弹目标 6,530</span>
           </div>
           <div class="v-item" style="display:flex;gap:8px;align-items:flex-start;padding:6px 0;font-size:13px;">
             <span style="color:var(--dim)">⬜</span>
-            <span>下周一（3/23）出现崩盘而非反弹</span>
+            <span>回补 6,340 缺口</span>
           </div>
           <div class="v-item" style="display:flex;gap:8px;align-items:flex-start;padding:6px 0;font-size:13px;">
             <span style="color:var(--dim)">⬜</span>
-            <span>4月份无法展开 W[5] 结构</span>
+            <span>3月底收盘 > 6,368</span>
           </div>
           <div class="v-item" style="display:flex;gap:8px;align-items:flex-start;padding:6px 0;font-size:13px;">
             <span style="color:var(--dim)">⬜</span>
-            <span>6月前未创新 ATH → 时间窗口过期</span>
+            <span>支撑区 6,300-6,310 是否成为反弹底部</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="background:var(--card2); border-radius:8px; padding:16px; border: 1px solid rgba(239,68,68,0.3);">
+        <div style="font-size:14px; font-weight:600; color:var(--red); margin-bottom:12px;">
+          ❌ 已触发的否定条件（原 W[5] 路径）
+        </div>
+        <div class="verify-items">
+          <div class="v-item" style="display:flex;gap:8px;align-items:flex-start;padding:6px 0;font-size:13px;">
+            <span style="color:var(--red)">❌</span>
+            <span>SPX 跌破 6,473 底部 → <strong style="color:var(--red)">3/28 触发 (6,356)</strong></span>
+          </div>
+          <div class="v-item" style="display:flex;gap:8px;align-items:flex-start;padding:6px 0;font-size:13px;">
+            <span style="color:var(--red)">❌</span>
+            <span>W[5] 推动浪无法展开 → <strong style="color:var(--red)">已确认失败</strong></span>
+          </div>
+          <div class="v-item" style="display:flex;gap:8px;align-items:flex-start;padding:6px 0;font-size:13px;">
+            <span style="color:var(--red)">❌</span>
+            <span>波浪计数被迫重构：终结楔形 → 引导楔形</span>
+          </div>
+          <div class="v-item" style="display:flex;gap:8px;align-items:flex-start;padding:6px 0;font-size:13px; margin-top:8px; padding-top:10px; border-top:1px solid rgba(255,255,255,0.06);">
+            <span>📝</span>
+            <span style="color:var(--dim);">结论：原"W[5]冲新高"路径已被否定，作者转为熊市判断</span>
           </div>
         </div>
       </div>
@@ -688,9 +734,10 @@
     <div style="font-size:13px; color:var(--dim); line-height:1.8;">
       <p>1. <strong style="color:var(--text)">每日收盘后</strong> — 检查 SPX 价格，更新图表数据</p>
       <p>2. <strong style="color:var(--text)">每周末</strong> — 对照新一期 capitalwatch 报告，更新预测状态</p>
-      <p>3. <strong style="color:var(--text)">关键日期</strong> — 3/23（反弹验证）、4-5月（ATH验证）、5-8月（大顶验证）</p>
-      <p>4. <strong style="color:var(--text)">否定信号</strong> — 一旦触发任何否定条件，立即标记模型失效</p>
-      <p style="margin-top:8px; color:var(--amber)">⚠️ 提醒：已验证的 8/9 命中率仅覆盖 1 个月数据，且可能存在展示偏差。中长期预测的验证才是真正的试金石。</p>
+      <p>3. <strong style="color:var(--text)">关键验证</strong> — 3月底收盘（>6,368?）、6,300-6,310 支撑验证、反弹目标 6,530</p>
+      <p>4. <strong style="color:var(--text)">火马年跟踪</strong> — 持续对比 1966 年走势，验证 10 个月跌 30% 预测</p>
+      <p>5. <strong style="color:var(--text)">世代熊市</strong> — 跟踪"扩张引导楔形"结构是否成立</p>
+      <p style="margin-top:8px; color:var(--red)">🚨 3/29 重大更新：作者波浪计数重构，从牛市 W[5] 路径转为熊市判断。原 W[5] 冲新高的预测已被否定。已验证命中率从 89% 降至 64%，中长期预测可信度需持续检验。</p>
     </div>
   </div>
 
@@ -824,13 +871,13 @@ const predictions = [
   },
   {
     date: '2月底', prediction: '兴登堡凶兆 5+ 次闪烁 → 顶部预警',
-    actual: '市场确实从 7,002 高位大幅回调 -7.6%',
+    actual: '市场确实从 7,002 高位大幅回调，最终跌至 6,356（-9.2%）',
     status: 'hit', category: '周期', verifiedDate: '3月10日'
   },
   {
     date: '3月5日', prediction: '超级穹顶破位 → 下跌延续至3月下旬',
-    actual: '下跌确实延续至 3/20，穹顶形态准确',
-    status: 'hit', category: '趋势+形态', verifiedDate: '3月21日'
+    actual: '下跌延续至 3/28，穹顶形态准确。从 6,633 进一步跌至 6,356',
+    status: 'hit', category: '趋势+形态', verifiedDate: '3月28日'
   },
   {
     date: '3月5日', prediction: '3/9 水逆中点 → 崩盘 + 深V反转',
@@ -844,32 +891,52 @@ const predictions = [
   },
   {
     date: '3月12日', prediction: '终极底部在 6,500 区域附近',
-    actual: '实际底部 6,473（3/20），误差仅 27 点',
-    status: 'hit', category: '波浪+技术', verifiedDate: '3月21日'
+    actual: '3/20 暂时底部 6,473，但 3/28 跌破至 6,356 → 非终极底部',
+    status: 'partial', category: '波浪+技术', verifiedDate: '3月28日'
   },
   {
     date: '3月12日', prediction: '水逆结束日 3/20 = W[E] 浪完成',
-    actual: '3/20 确实触及最低 6,473 并反弹',
-    status: 'hit', category: '占星+波浪', verifiedDate: '3月21日'
+    actual: '3/20 触及 6,473 并短暂反弹，但后续再度下跌',
+    status: 'partial', category: '占星+波浪', verifiedDate: '3月28日'
   },
   {
     date: '3月18日', prediction: '底部概率分布：6,550 @50% / 6,600 @30% / 6,425 @20%',
-    actual: '实际 6,473 介于 50% 和 20% 路径之间',
-    status: 'partial', category: '技术', verifiedDate: '3月21日'
+    actual: '实际 6,473 一度命中，但后续跌至 6,356 全部跌破',
+    status: 'partial', category: '技术', verifiedDate: '3月28日'
   },
   {
     date: '3月22日', prediction: '85% 下周一（3/23）大反弹 / 15% 崩盘',
-    actual: '3/20 低点 6,506 → 3/23 收盘 6,581（+1.15%）',
+    actual: '3/20 低点 6,506 → 3/23 收盘 6,581（+1.15%），短期正确',
     status: 'hit', category: '波浪+占星', verifiedDate: '3月24日'
   },
   {
-    date: '2月底', prediction: '牛市最终顶部在 2026年5月（或推迟至8月）',
-    actual: '需 SPX 先创 ATH 再确认顶部',
-    status: 'pending', category: '周期+波浪', verifiedDate: null
+    date: '2月底', prediction: 'W[5] 推动浪冲击历史新高 (>7,002)',
+    actual: '3/29: 作者重新审视波浪计数，SPX 跌破 6,473 → W[5] 推新高路径被否定',
+    status: 'miss', category: '波浪', verifiedDate: '3月29日'
+  },
+  {
+    date: '3月29日', prediction: 'SPX 7002 确认见顶，结构性崩坏',
+    actual: 'SPX 从 6,633 跌至 6,356，未收复 6,620 关键区域，牛市支撑结构失守',
+    status: 'pending', category: '波浪+技术', verifiedDate: null
+  },
+  {
+    date: '3月29日', prediction: '超短期反弹目标 6,530，支撑 6,300-6,310',
+    actual: '待验证：3月底收盘需高于 6,368',
+    status: 'pending', category: '技术', verifiedDate: null
+  },
+  {
+    date: '3月29日', prediction: '"扩张引导楔形"开启 → 世代级熊市',
+    actual: '待验证：作者接近确认从 7003 开始进入世代级熊市',
+    status: 'pending', category: '波浪+周期', verifiedDate: null
+  },
+  {
+    date: '3月29日', prediction: '"火马年"效应 → 2026年标志周期B顶点，萧条至2032',
+    actual: '待验证：与1966年赤马年对比，预测市场10个月暴跌30%',
+    status: 'pending', category: '周期+历史', verifiedDate: null
   },
   {
     date: '2月底', prediction: '顶部之后 → 大级别熊市',
-    actual: '最远期预测，需数月验证',
+    actual: '3/29文章：作者已接近确认熊市开始。2026年→萧条周期C→2032见底',
     status: 'pending', category: '周期+波浪', verifiedDate: null
   },
 ];
@@ -910,27 +977,37 @@ const spxData = [
   { date: '3/9',  o: 6700, h: 6810, l: 6636, c: 6796 },
   { date: '3/10', o: 6797, h: 6845, l: 6760, c: 6781 },
   { date: '3/11', o: 6790, h: 6811, l: 6746, c: 6776 },
-  { date: '3/12', o: 6741, h: 6741, l: 6670, c: 6673 },
-  { date: '3/13', o: 6673, h: 6733, l: 6624, c: 6632 },
+  { date: '3/12', o: 6726, h: 6741, l: 6670, c: 6673 },
+  { date: '3/13', o: 6674, h: 6733, l: 6624, c: 6632 },
   { date: '3/16', o: 6674, h: 6730, l: 6674, c: 6699 },
   { date: '3/17', o: 6722, h: 6754, l: 6711, c: 6716 },
   { date: '3/18', o: 6697, h: 6705, l: 6622, c: 6625 },
   { date: '3/19', o: 6583, h: 6637, l: 6558, c: 6606 },
   { date: '3/20', o: 6595, h: 6595, l: 6474, c: 6506 },
+  { date: '3/23', o: 6575, h: 6652, l: 6566, c: 6581 },
+  { date: '3/24', o: 6552, h: 6596, l: 6525, c: 6556 },
+  { date: '3/25', o: 6598, h: 6634, l: 6568, c: 6592 },
+  { date: '3/26', o: 6556, h: 6573, l: 6474, c: 6477 },
+  { date: '3/27', o: 6454, h: 6454, l: 6356, c: 6369 },
 ];
 
 // Prediction markers on chart
 const markers = [
   { dateIdx: 0, type: 'event', label: '血月/满月', color: '#a855f7', y: 'high' },
   { dateIdx: 5, type: 'event', label: '水逆中点 → 深V', color: '#f59e0b', y: 'low' },
-  { dateIdx: 14, type: 'event', label: '水逆结束 → 底部', color: '#22c55e', y: 'low' },
+  { dateIdx: 14, type: 'event', label: '水逆结束 → 暂时底', color: '#22c55e', y: 'low' },
+  { dateIdx: 15, type: 'event', label: '短暂反弹', color: '#3b82f6', y: 'high' },
+  { dateIdx: 19, type: 'event', label: '结构崩坏 6,356', color: '#ef4444', y: 'low' },
 ];
 
 // Key levels
 const levels = [
-  { price: 6600, label: 'SMA200 ~6,600', color: '#3b82f6', dash: [6,4] },
-  { price: 6550, label: 'FIB 6,550 (50%)', color: '#f59e0b', dash: [4,4] },
-  { price: 6425, label: 'W[E] 极端 6,425 (20%)', color: '#ef4444', dash: [8,4] },
+  { price: 6620, label: '关键区域 6,620', color: '#f59e0b', dash: [6,4] },
+  { price: 6530, label: '反弹目标 6,530', color: '#3b82f6', dash: [4,4] },
+  { price: 6473, label: '原 W[4] 底 6,473', color: '#a855f7', dash: [4,4] },
+  { price: 6368, label: '月线要求 6,368', color: '#06b6d4', dash: [4,4] },
+  { price: 6340, label: '缺口 6,340', color: '#ef4444', dash: [8,4] },
+  { price: 6300, label: '建仓底部 6,300', color: '#22c55e', dash: [6,4] },
 ];
 
 function drawChart() {
@@ -1078,13 +1155,13 @@ function drawChart() {
   });
 
   // Bottom label
-  ctx.fillStyle = 'rgba(34,197,94,0.2)';
-  const bottomY = yScale(6474);
+  ctx.fillStyle = 'rgba(239,68,68,0.2)';
+  const bottomY = yScale(6356);
   ctx.fillRect(pad.left, bottomY - 1, cw, 2);
-  ctx.fillStyle = '#22c55e';
+  ctx.fillStyle = '#ef4444';
   ctx.font = 'bold 11px -apple-system, sans-serif';
   ctx.textAlign = 'left';
-  ctx.fillText('底部 6,474', W - pad.right + 6, bottomY + 4);
+  ctx.fillText('当前低点 6,356', W - pad.right + 6, bottomY + 4);
 }
 
 function roundRect(ctx, x, y, w, h, r) {
